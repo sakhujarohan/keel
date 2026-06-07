@@ -1,3 +1,11 @@
+---
+artifact: requirements
+phase: 1
+gate: G1
+status: draft        # draft | signed-off
+updated: <YYYY-MM-DD>
+---
+
 <!--
 TEMPLATE: Requirements (Phase 1). Copy to specs/<run>/requirements.md and fill in.
 Delete these HTML comments as you complete each section.
@@ -44,11 +52,28 @@ Give each a stable ID. These IDs flow into HLD, LLD, tasks, and tests.
 | N4 | Availability | | |
 | N5 | Security | | |
 
+## Performance Targets
+
+<!-- Quantified targets for the performance/scale NFRs. Leave "Achieved" blank now; fill it at review (Phase 7). Only include metrics the problem actually implies — don't invent SLAs. -->
+
+| Metric | Target | Achieved |
+|--------|--------|----------|
+| <e.g. p99 latency> | <e.g. < 200 ms> | <filled at review> |
+| <throughput> | | |
+| <error rate> | | |
+
 ## Constraints
 
 <!-- Fixed decisions you don't get to make: mandated stack, data formats, external interfaces, deadlines. -->
 
 - <constraint>
+
+## Assumptions
+
+<!-- Deliberate defaults you are proceeding WITH (stated, not blocking) — distinct from Open Questions, which are UNKNOWNs that must be resolved. State each so a reviewer can challenge it. -->
+
+- <e.g. an upstream gateway supplies a trusted user identity>
+- <e.g. single-region deployment for v1>
 
 ## Out of Scope (explicit)
 

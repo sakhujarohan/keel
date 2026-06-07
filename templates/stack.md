@@ -1,3 +1,11 @@
+---
+artifact: stack
+phase: 3
+gate: G3
+status: draft        # draft | signed-off
+updated: <YYYY-MM-DD>
+---
+
 <!--
 TEMPLATE: Stack Selection (Phase 3). Copy to specs/<run>/stack.md and fill in.
 Every choice is traced to a DRIVER — an NFR or constraint that forces it. Choices "by habit" are a smell.
@@ -25,13 +33,9 @@ Load-bearing or contested choices get an ADR in decisions/ (templates/adr.md). D
 
 ## Stack Conventions
 
-<!--
-If a language/framework guideline doc governs this run (layout, idioms, naming, lint config),
-agree it here and link/inline it. This is the point where stack-specific guidelines get pulled in.
--->
+<!-- The stack DECISION is above; the project codebook captures HOW we build in it. -->
 
-- Project layout: <link or description>
-- Conventions / lint: <link or description>
+Produce **`specs/<run>/conventions.md`** (from `templates/conventions.md`) at this gate — the per-project codebook: structure, conventions, key implementation patterns, and a "Do NOT" list. The build phase (Phase 6) follows it.
 
 ## Known Trade-offs & Risks
 

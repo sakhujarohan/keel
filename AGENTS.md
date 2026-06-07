@@ -25,7 +25,7 @@ When in doubt, stop at the gate and ask. A blocked agent costs minutes; a wrong 
 | 0 | **Kickoff** | `specs/<run>/context.md` | — |
 | 1 | **Requirements** | `specs/<run>/requirements.md` | **G1 — Requirements Lock** *(no design before this)* |
 | 2 | **High-Level Design** | `specs/<run>/hld.md` | **G2 — HLD sign-off** |
-| 3 | **Stack Selection** | `specs/<run>/stack.md` | **G3 — Stack Lock** |
+| 3 | **Stack Selection** | `specs/<run>/stack.md` + `conventions.md` | **G3 — Stack Lock** |
 | 4 | **Low-Level Design** | `specs/<run>/features/<feature>/lld.md` | **G4 — LLD sign-off** (per feature) |
 | 5 | **Task Breakdown** | `specs/<run>/features/<feature>/tasks.md` | review |
 | 6 | **Build & Test** | code + tests | — |
@@ -52,7 +52,7 @@ Name them out loud when you catch one. Each maps to a gate or principle that pre
 
 ## How to Start a Run
 
-**Claude Code:** run `/kickoff` and follow the prompts. The phase commands are `/kickoff → /requirements → /hld → /stack → /lld → /tasks → /review`.
+**Claude Code:** run `/kickoff` and follow the prompts. The phase commands are `/kickoff → /requirements → /hld → /stack → /lld → /tasks → /review`. Session commands: `/resume` at the start, `/status` to refresh the dashboard, `/handoff` before you stop.
 
 **Any other agent:** open `workflow/lifecycle.md` and execute Phase 0. Create `specs/<run>/` for this piece of work (`<run>` = a short kebab-case name for the feature or project).
 
@@ -60,6 +60,16 @@ Phase 0 establishes three things and writes them to `specs/<run>/context.md`:
 1. **Mode** — new project (greenfield) · feature or change in an existing codebase.
 2. **Time budget** — drives whether you use the standard path or the fast path.
 3. **Rigor profile** — `prototype`, `standard`, or `production` (see below).
+
+---
+
+## Run State & Continuity
+
+Every run keeps a **`specs/<run>/STATUS.md`** — the *captain's log* — so work survives across sessions and agents:
+
+- **Source of truth = artifact frontmatter.** Each artifact carries a small YAML block (`phase`, `gate`, `status`, `updated`). When a gate passes, its artifact is set to `status: signed-off`.
+- **`STATUS.md` has two zones.** `## Now` is a *derived* snapshot (phase, gate line, task rollup, next action) — regenerated, never hand-edited. `## Session log` is append-only, newest on top — one entry per work session.
+- **Commands:** `/status` regenerates `Now` from the frontmatter + tasks; `/handoff` (session end) appends a log entry and prints a git-anchored resume packet; `/resume` (session start) re-orients from `STATUS.md` + git and confirms the next step. Agents without these commands do the same by hand.
 
 ---
 
@@ -112,7 +122,7 @@ workflow/
   fast-path.md       ← compressed overlay for time-boxed / rapid work
 templates/           ← fill-in skeleton for every artifact a phase produces
 .claude/commands/    ← Claude Code slash commands that drive each phase
-specs/               ← per-run artifacts are created here (one folder per run)
+specs/               ← per-run artifacts + STATUS.md (the captain's log), one folder per run
 decisions/           ← ADRs accumulate here across runs
 ```
 

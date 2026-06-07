@@ -1,3 +1,11 @@
+---
+artifact: tasks
+phase: 5
+gate: "—"            # no gate; progress tracked by checkboxes
+status: draft        # draft | signed-off
+updated: <YYYY-MM-DD>
+---
+
 <!--
 TEMPLATE: Task Breakdown (Phase 5, per feature). Copy to specs/<run>/features/<feature>/tasks.md.
 Tasks are atomic, testable, dependency-ordered. Grouped into waves: a wave's tasks have all dependencies

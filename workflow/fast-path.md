@@ -29,6 +29,8 @@ Use this overlay when the time budget set in Phase 0 is tight (roughly: a few ho
 
 Under tight time, **G2 and G3 are usually a single conversation**: "here's the shape, here's what I'd build it in, and why."
 
+Even here, keep a one-screen `STATUS.md` and run `/handoff` if you might resume later — continuity is cheap insurance.
+
 ---
 
 ## Time-boxing heuristic

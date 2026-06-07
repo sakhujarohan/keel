@@ -8,6 +8,16 @@ A "run" is one feature or one project. Its artifacts live in `specs/<run>/`, whe
 
 ---
 
+## Run State & Continuity
+
+Every run keeps a **`specs/<run>/STATUS.md`** (the *captain's log*) so work survives across sessions and agents.
+
+- **Source of truth = artifact frontmatter.** Each artifact has a YAML header (`phase`, `gate`, `status`, `updated`). When a gate passes, set that artifact's `status: signed-off` and bump `updated`.
+- **`STATUS.md` = `## Now`** (a *derived* snapshot — regenerate with `/status`, never hand-edit) **+ `## Session log`** (append-only, newest on top).
+- **Rhythm:** `/resume` at the start of a session · `/status` to refresh after a change · `/handoff` before you stop (appends a log entry + prints a git-anchored resume packet). Agents without these commands do the same by hand.
+
+---
+
 ## Phase 0 — Kickoff
 
 **Purpose:** Establish the frame before any thinking about the problem. Five minutes that make the rest of the run deterministic.
@@ -19,9 +29,10 @@ A "run" is one feature or one project. Its artifacts live in `specs/<run>/`, whe
 2. Determine **mode**: new project (greenfield) · feature or change in an existing codebase.
 3. Determine the **time budget**. If it is tight (a spike, a tight deadline), switch to `workflow/fast-path.md` for the rest of the run — same gates, leaner artifacts.
 4. Choose the **rigor profile** (`prototype` / `standard` / `production`) and note any per-concern overrides. See `profiles/`.
-5. Write `specs/<run>/context.md` (template: `templates/` has the shape inline in each artifact; context.md is short — mode, budget, profile, overrides, one-line problem framing).
+5. Write `specs/<run>/context.md` from `templates/context.md` — mode, budget, profile, overrides, one-line problem framing.
+6. Create `specs/<run>/STATUS.md` from `templates/status.md` (the captain's log — see Run State & Continuity above).
 
-**Artifact:** `specs/<run>/context.md`
+**Artifact:** `specs/<run>/context.md` + `specs/<run>/STATUS.md`
 
 **Gate:** none — but confirm the mode and profile with the human before moving on.
 
@@ -39,7 +50,7 @@ A "run" is one feature or one project. Its artifacts live in `specs/<run>/`, whe
 
 **Activities:**
 1. Capture **functional requirements** as testable statements. Use **EARS** notation (see the template) so each is unambiguous and verifiable.
-2. Capture **non-functional requirements** — performance, scale, concurrency, consistency, availability, security — but only those the problem actually implies. Mark anything unstated as `UNKNOWN`.
+2. Capture **non-functional requirements** — performance, scale, concurrency, consistency, availability, security — but only those the problem actually implies. Mark anything unstated as `UNKNOWN`. Set **performance targets** (numbers) for any quantified NFR, and record explicit **assumptions** (deliberate defaults you're proceeding with — distinct from open questions).
 3. List **constraints** — fixed tech, data formats, interfaces, deadlines.
 4. List **explicit out-of-scope** items. This is half the value of the phase: it is what stops scope-latch.
 5. **Clarify loop.** Ask the human every question whose answer would change the design. Batch the questions; don't dribble them. Keep asking until no design-changing ambiguity remains. For ambiguous or evolving problems, this loop is the whole game — *do not move on while the requirements are still moving.*
@@ -70,6 +81,7 @@ A "run" is one feature or one project. Its artifacts live in `specs/<run>/`, whe
    - **Key sequence diagrams**: the critical flows end-to-end (especially the ones the critical questions touch).
 3. State the **data model at a conceptual level** — entities and relationships, not yet schemas.
 4. Map every component back to the requirement IDs it serves (traceability).
+5. Enumerate the **feature list** — the features Phase 4 will iterate, each traced to its requirement IDs (the HLD→LLD bridge).
 
 **Artifact:** `specs/<run>/hld.md` (template: `templates/hld.md`)
 
@@ -90,10 +102,10 @@ A "run" is one feature or one project. Its artifacts live in `specs/<run>/`, whe
 **Activities:**
 1. For each major choice (language, framework, datastore, messaging, key libs), list the realistic candidates and the **decision driver** — which NFR or constraint forces the choice (e.g. "ACID + relational data → Postgres", "team fluency + ecosystem → Java/Spring").
 2. Where a choice is load-bearing or contested, write an **ADR** in `decisions/` (template: `templates/adr.md`).
-3. If a language/framework guideline doc is to be used (conventions, project layout, idioms), agree it here and reference it. This is where stack-specific guidelines get pulled in.
+3. Produce the **project codebook** `specs/<run>/conventions.md` (from `templates/conventions.md`): structure, conventions, key implementation patterns, and a "Do NOT" list — the manual Phase 6 follows.
 4. Record the final choices and their rationale in `stack.md`.
 
-**Artifact:** `specs/<run>/stack.md` (+ ADRs in `decisions/`)
+**Artifact:** `specs/<run>/stack.md` + `specs/<run>/conventions.md` (+ ADRs in `decisions/`)
 
 **Gate:** 🚦 **G3 — Stack Lock.** Confirm the stack with the human. After this gate, the stack is fixed for the run; changing it means returning here and re-deciding explicitly.
 
@@ -109,7 +121,7 @@ A "run" is one feature or one project. Its artifacts live in `specs/<run>/`, whe
 
 **Inputs:** `hld.md`, `stack.md`, the requirements for this feature.
 
-**Activities:** for each feature (`specs/<run>/features/<feature>/`):
+**Activities:** for each feature in the HLD feature list (`specs/<run>/features/<feature>/`):
 1. Draw a **class diagram** (Mermaid `classDiagram`) — the types, their key methods, and relationships.
 2. Define the **interfaces / contracts** — public method signatures, API endpoints, message shapes.
 3. Specify the **concrete data model** — tables/collections, fields, types, indexes, constraints.
@@ -178,7 +190,7 @@ A "run" is one feature or one project. Its artifacts live in `specs/<run>/`, whe
 **Inputs:** the built feature(s), the rigor profile, `templates/review-checklist.md`.
 
 **Activities:**
-1. Run the **review checklist** (`templates/review-checklist.md`), scoped to the chosen profile — correctness, concurrency, error handling, observability, security, performance, docs.
+1. Run the **review checklist** (`templates/review-checklist.md`), scoped to the chosen profile — correctness, concurrency, error handling, observability, security, performance, docs. Complete its **Traceability & Validation Ledger** (every requirement → tests → status) and reconcile the Performance-Targets "Achieved" column.
 2. Close gaps the checklist surfaces. Record any deliberate scope cuts ("no idempotency keys in this version, here's how I'd add them") in the README and/or an ADR.
 3. Write/finish the **README**: how to run, the approach and key decisions, known limitations, and — if relevant — how AI was used.
 4. Ensure every load-bearing decision made during the build has an **ADR** in `decisions/`.

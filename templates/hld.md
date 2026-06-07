@@ -1,3 +1,11 @@
+---
+artifact: hld
+phase: 2
+gate: G2
+status: draft        # draft | signed-off
+updated: <YYYY-MM-DD>
+---
+
 <!--
 TEMPLATE: High-Level Design (Phase 2). Copy to specs/<run>/hld.md and fill in.
 Decide SHAPE and RESPONSIBILITIES here — not the stack (Phase 3) and not class detail (Phase 4).
@@ -23,6 +31,8 @@ These are the questions a reviewer will push on. Answer them before drawing boxe
 - **Why:** <trade-off; which NFR drives it> (→ may become an ADR in Phase 3)
 
 ---
+
+> **Right-size the C4 levels:** include the levels that add information; collapse adjacent levels when one would just duplicate another (a small service often merges Container + Component into one diagram). On the fast path, one component sketch + one sequence diagram is enough.
 
 ## C4 Level 1 — System Context
 
@@ -91,6 +101,15 @@ erDiagram
 ```
 
 ---
+
+## Feature List
+
+<!-- The features the LLD phase (Phase 4) will iterate, each traced to the requirements it delivers. This is the bridge from HLD to per-feature LLD. -->
+
+| Feature | Delivers | LLD |
+|---------|----------|-----|
+| <feature-a> | R1, R2 | `features/<feature-a>/lld.md` |
+| <feature-b> | R3 | `features/<feature-b>/lld.md` |
 
 ## G2 — HLD Sign-off
 

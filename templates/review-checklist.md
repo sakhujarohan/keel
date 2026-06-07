@@ -1,3 +1,11 @@
+---
+artifact: review
+phase: 7
+gate: G5
+status: draft        # draft | signed-off
+updated: <YYYY-MM-DD>
+---
+
 <!--
 TEMPLATE: Review Checklist (Phase 7). Copy to specs/<run>/review-checklist.md (or run inline).
 Scope it to the chosen rigor profile: a `prototype` need not satisfy `production` rows. Check the rows that
@@ -8,6 +16,19 @@ known limitation — an undocumented gap is a defect. Delete these comments.
 # Review Checklist — <run>
 
 **Profile:** <prototype | standard | production> (+ overrides) · **Reviewed:** YYYY-MM-DD
+
+---
+
+## Traceability & Validation Ledger
+
+<!-- The acceptance back-check: every requirement → the tasks that built it → the tests that prove it → status. A requirement with no passing test is not done. -->
+
+| Req | Tasks | Tests | Status |
+|-----|-------|-------|--------|
+| R1 | T1, T3 | <test names> | ✓ pass / ✗ / partial |
+| R2 | | | |
+
+Also reconcile the **Performance Targets** table in `requirements.md` — fill its "Achieved" column from the build / load results.
 
 ---
 

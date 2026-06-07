@@ -1,3 +1,11 @@
+---
+artifact: lld
+phase: 4
+gate: G4
+status: draft        # draft | signed-off
+updated: <YYYY-MM-DD>
+---
+
 <!--
 TEMPLATE: Low-Level Design (Phase 4, per feature). Copy to specs/<run>/features/<feature>/lld.md.
 Goal: enough detail that implementation is mechanical. Apply the One-Line Test — could a builder agent
