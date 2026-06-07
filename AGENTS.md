@@ -105,7 +105,7 @@ Keel runs with one agent or many. When parallelizing:
 
 - **All agents read this file first**, plus the specific `specs/<run>/` artifact for their task.
 - **Split at the task layer** (Phase 5). `tasks.md` is dependency-ordered; tasks with no unmet dependencies can run concurrently (independent "waves"). Two agents must not edit the same file in the same wave.
-- **Roles are optional but useful** for larger work: a *designer* agent owns Phases 1–4 (specs and diagrams), *builder* agents own Phase 6 tasks, a *reviewer* agent owns Phase 7. Each role still respects the gates.
+- **Roles are optional but useful** for larger work: a *designer* agent owns Phases 1–4 (specs and diagrams), *builder* agents own Phase 6 tasks, a *reviewer* agent owns Phase 7 (Claude Code: the `reviewer` subagent in `.claude/agents/`). Each role still respects the gates.
 - **Context travels in the artifacts, not in chat history.** A builder agent must be able to complete a task from `lld.md` + `tasks.md` alone. If it can't, the design is underspecified — loop back to G4.
 
 ---
@@ -122,6 +122,9 @@ workflow/
   fast-path.md       ← compressed overlay for time-boxed / rapid work
 templates/           ← fill-in skeleton for every artifact a phase produces
 .claude/commands/    ← Claude Code slash commands that drive each phase
+.claude/agents/      ← Claude Code subagents (e.g. reviewer for Phase 7)
+tools/               ← optional toolchain setup — diagrams via the Kroki MCP (tools/diagrams.md)
+skills/              ← optional reusable capability modules (SKILL.md pattern)
 specs/               ← per-run artifacts + STATUS.md (the captain's log), one folder per run
 decisions/           ← ADRs accumulate here across runs
 ```

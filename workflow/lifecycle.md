@@ -74,7 +74,7 @@ Every run keeps a **`specs/<run>/STATUS.md`** (the *captain's log*) so work surv
 
 **Activities:**
 1. Surface the **critical design questions** — the few decisions that dominate the architecture (e.g. "how do concurrent requests stay correct?", "where does state live?", "what's the consistency model?"). Answer each, with the trade-off considered. Log them in the HLD.
-2. Draw the architecture with **UML/Mermaid** at the right C4 levels:
+2. Draw the architecture as **UML** at the right C4 levels (inline Mermaid by default; or validated SVGs via the optional Kroki toolchain — `tools/diagrams.md`):
    - **Context** (level 1): the system as a box, its users and external systems.
    - **Container** (level 2): the deployable/runnable pieces and the data stores.
    - **Component** (level 3): the major internal components and responsibilities.
@@ -122,7 +122,7 @@ Every run keeps a **`specs/<run>/STATUS.md`** (the *captain's log*) so work surv
 **Inputs:** `hld.md`, `stack.md`, the requirements for this feature.
 
 **Activities:** for each feature in the HLD feature list (`specs/<run>/features/<feature>/`):
-1. Draw a **class diagram** (Mermaid `classDiagram`) — the types, their key methods, and relationships.
+1. Draw a **class diagram** (Mermaid `classDiagram`, or `plantuml` via the optional Kroki toolchain — `tools/diagrams.md`) — the types, their key methods, and relationships.
 2. Define the **interfaces / contracts** — public method signatures, API endpoints, message shapes.
 3. Specify the **concrete data model** — tables/collections, fields, types, indexes, constraints.
 4. Specify the **error model** — failure modes, what each returns/raises, transaction/rollback behavior.
@@ -168,7 +168,7 @@ Every run keeps a **`specs/<run>/STATUS.md`** (the *captain's log*) so work surv
 
 **Activities:**
 1. Execute tasks in dependency order. Within a wave, parallelize across agents if available.
-2. For each task: write the code, write the tests against the relevant acceptance criteria, run them, and only then mark the task done. Keep the build green.
+2. For each task, work **test-first** (default for `standard`/`production`; optional for `prototype`): write the failing test(s) against the acceptance criteria, then the smallest code that passes them, run, and mark the task done only when green. Keep the build green throughout.
 3. Tests target behavior (acceptance criteria), not implementation shape. The depth of testing (unit / integration / contract / e2e) is set by the rigor profile.
 4. If a task reveals that the design is wrong, **stop and loop back** to the affected gate (G4, or further if needed). Do not patch forward around a broken design — that's requirements-drift.
 5. Apply the profile's other concerns as you go (logging, error handling, resilience, security) — don't bolt them on at the end if the profile requires them.

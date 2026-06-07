@@ -34,6 +34,8 @@ These are the questions a reviewer will push on. Answer them before drawing boxe
 
 > **Right-size the C4 levels:** include the levels that add information; collapse adjacent levels when one would just duplicate another (a small service often merges Container + Component into one diagram). On the fast path, one component sketch + one sequence diagram is enough.
 
+> **Diagrams:** inline Mermaid (below) is the zero-dep default. If the Kroki toolchain is set up (see `tools/diagrams.md`), generate validated SVGs instead — `c4plantuml` for architecture, `plantuml` for flows, `erd` for the data model — saved to the run's `diagrams/` and embedded as SVG + source in a `<details>` block.
+
 ## C4 Level 1 — System Context
 
 <!-- The system as one box: who/what uses it and which external systems it talks to. -->

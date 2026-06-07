@@ -20,10 +20,18 @@ have to reverse-engineer. Keep it short. Delete these comments.
 
 ## Alternatives considered
 
-<!-- The realistic options not taken, and why. This is what makes the ADR worth keeping. -->
+<!-- The realistic options not taken, and why. This is what makes the ADR worth keeping. For a contested multi-option call, a comparison table (criteria × options) often reads better than prose — see the optional table below. -->
 
 - **<Alternative A>** — rejected because <reason>.
 - **<Alternative B>** — rejected because <reason>.
+
+<!-- Optional — for contested multi-option decisions, compare on the criteria that matter:
+| Criterion | <Option A> | <Option B> (chosen) |
+|-----------|------------|---------------------|
+| <e.g. simplicity>  | … | … |
+| <e.g. correctness> | … | … |
+| <e.g. scale>       | … | … |
+-->
 
 ## Consequences
 

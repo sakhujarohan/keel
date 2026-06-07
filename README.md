@@ -47,8 +47,11 @@ Each run lives in its own folder under `specs/<run>/`. Artifacts accumulate ther
 | `profiles/` | Rigor profiles and the concern-by-concern axes. |
 | `templates/` | A fill-in skeleton for every artifact. |
 | `.claude/commands/` | Claude Code slash commands for each phase. |
+| `tools/` | Optional toolchain setup — diagrams via the Kroki MCP. |
+| `skills/` | Optional reusable capability modules (`SKILL.md` pattern). |
 | `specs/` | Per-run artifacts (one folder per run). |
 | `decisions/` | Architecture Decision Records. |
+| `examples/` | Worked example runs — read these to see real artifacts. |
 
 ---
 

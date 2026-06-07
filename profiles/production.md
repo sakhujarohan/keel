@@ -10,7 +10,7 @@
 | **Security** | + dependency scan + threat model | Adds dependency/vulnerability scanning and a lightweight threat model (what an attacker would target and how it's mitigated), on top of authn/authz + secrets. |
 | **Documentation** | + API docs + runbook | Adds published API docs (e.g. OpenAPI) and an operational runbook (how to deploy, roll back, and respond to common alerts). |
 | **CI / Automation** | + build + deploy pipeline | Full pipeline: lint, test, build artifact, and deploy (with rollback). No manual deploys. |
-| **Performance** | + load test + SLOs | Load/stress testing against defined SLOs (latency, throughput, error budget); capacity understood before launch. |
+| **Performance** | + load test + SLOs | Load/stress testing against defined SLOs (latency, throughput, error budget) — see `skills/load-testing/`; capacity understood before launch. |
 
 **Mandatory regardless:** every failure mode has a defined behavior; the system is observable from telemetry; there is a runbook; SLOs are defined and tested against; deploys are automated and reversible.
 

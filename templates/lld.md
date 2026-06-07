@@ -21,6 +21,8 @@ implement this feature from this document alone? If not, it's underspecified. De
 
 ## Class / Type Design
 
+> **Diagrams:** Mermaid below is the zero-dep default. With the Kroki toolchain (see `tools/diagrams.md`), generate `plantuml` class + `dbml`/`erd` SVGs into the run's `diagrams/` instead (SVG + source in `<details>`).
+
 ```mermaid
 classDiagram
     class TypeA {

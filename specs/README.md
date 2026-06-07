@@ -8,6 +8,7 @@ specs/<run>/
   STATUS.md                       ← Phase 0+: captain's log (derived Now + session log)
   requirements.md                 ← Phase 1 (gate G1)
   hld.md                          ← Phase 2 (gate G2)
+  diagrams/                       ← rendered SVGs (optional Kroki toolchain — tools/diagrams.md)
   stack.md                        ← Phase 3 (gate G3)
   conventions.md                  ← Phase 3: per-project codebook (structure, conventions, Do NOT)
   features/<feature>/
