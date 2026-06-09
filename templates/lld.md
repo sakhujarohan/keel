@@ -21,7 +21,7 @@ implement this feature from this document alone? If not, it's underspecified. De
 
 ## Class / Type Design
 
-> **Diagrams:** Mermaid below is the zero-dep default. With the Kroki toolchain (see `tools/diagrams.md`), generate `plantuml` class + `dbml`/`erd` SVGs into the run's `diagrams/` instead (SVG + source in `<details>`).
+> **Diagrams:** use the run's configured renderer (default **D2** — class as `shape: class`, schema as `shape: sql_table`; see `tools/diagrams.md`), generating SVGs into the run's `diagrams/` (image + source in `<details>`). Inline Mermaid below is the no-setup fallback.
 
 ```mermaid
 classDiagram
@@ -48,15 +48,18 @@ classDiagram
 
 ## Concrete Data Model
 
-<!-- Now the real thing: tables/collections, fields, types, keys, indexes, constraints. -->
+<!-- Table by table — exactly how data is stored. One block per table: fields, types, keys, indexes, constraints. Generate a schema diagram using the configured renderer (default D2 `shape: sql_table`; see `tools/diagrams.md`) into the run's `diagrams/` and embed it. -->
 
-| Field | Type | Constraints / notes |
-|-------|------|---------------------|
+### <table_name>
+| Field | Type | Key / constraint |
+|-------|------|------------------|
 | id | <type> | PK |
-| | | |
+| <field> | <type> | FK → <table> · UNIQUE · NOT NULL |
 
-Indexes: <which, and why>
-Invariants: <what must always hold>
+Indexes: <which, and why> · Invariants: <what must always hold>
+
+<!-- repeat the block per table, then embed the schema diagram: -->
+![Schema](diagrams/<feature>-schema.svg)
 
 ## Error Model
 

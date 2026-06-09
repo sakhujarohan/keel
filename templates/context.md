@@ -16,5 +16,6 @@ updated: <YYYY-MM-DD>
 - **Time budget:** <ample → standard path | tight → fast path (see `workflow/fast-path.md`)>
 - **Rigor profile:** <prototype | standard | production> (see `profiles/`)
 - **Overrides:** <e.g. observability → production; or none>
+- **Diagram renderer:** d2 <default | mermaid | d2-sketch — see `tools/diagrams.md`>
 
 **Problem (one line):** <the problem this run solves>

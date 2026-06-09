@@ -90,7 +90,7 @@ Production rigor is **modular**, not all-or-nothing. A profile sets a default le
 These hold in every phase. The full constitution is in **`principles.md`**.
 
 1. **Specs are the source of truth.** Code is the *expression* of the spec. When intent changes, change the spec first, then flow it down.
-2. **Traceability end-to-end.** Every requirement has an ID (`R1`, `R2`, …). Designs, tasks, tests, and commits reference the IDs they satisfy.
+2. **Traceability end-to-end, expressed readably.** Every requirement has an ID (`R1`, `R2`, …) — but IDs are *light labels on prose*, concentrated in the Validation Ledger, never ID-soup. A human must be able to read any artifact without decoding IDs.
 3. **Tests prove behavior.** Tests are written against acceptance criteria, not against the implementation.
 4. **Smallest correct solution.** Solve the locked requirements and nothing more. Add abstraction when a second caller exists, not before.
 5. **No invented facts.** Unknowns are marked `UNKNOWN` and raised, never guessed.

@@ -1,7 +1,8 @@
 <!--
 TEMPLATE: Architecture Decision Record. Copy to decisions/NNNN-short-title.md (NNNN = next number, zero-padded).
-One ADR per load-bearing decision: anything expensive to reverse, or that a future reader would otherwise
-have to reverse-engineer. Keep it short. Delete these comments.
+One ADR per load-bearing decision: anything expensive to reverse, or that a future reader would otherwise have to
+reverse-engineer. Write it so a newcomer understands the problem, the real options, and why — readably (no ID-soup).
+Delete these comments.
 -->
 
 # ADR NNNN — <short title>
@@ -10,32 +11,45 @@ have to reverse-engineer. Keep it short. Delete these comments.
 - **Date:** YYYY-MM-DD
 - **Run:** <run> (or "cross-cutting")
 
-## Context
+## Problem & forces
 
-<!-- The forces at play: the requirement/NFR, the constraints, what makes this a real decision. -->
+<!-- What decision is being made and why it's hard. The requirement/NFR driving it, the constraints, and the tension
+between forces (e.g. correctness vs. throughput). A reader should grasp the problem without opening other docs. -->
+
+## Options considered
+
+<!-- Two or more REAL options, each with honest pros and cons — not one-liners. -->
+
+### Option A — <name>
+- **How it works:** <one or two sentences>
+- **Pros:** <…>
+- **Cons:** <…>
+
+### Option B — <name>   ← chosen
+- **How it works:** <…>
+- **Pros:** <…>
+- **Cons:** <…>
+
+<!-- Optional at-a-glance comparison for contested calls:
+| Criterion | Option A | Option B (chosen) |
+|-----------|----------|-------------------|
+| <correctness> | … | … |
+| <throughput>  | … | … |
+| <complexity>  | … | … |
+-->
 
 ## Decision
 
-<!-- What we chose. State it plainly, in one or two sentences. -->
+<!-- What we chose, in plain language, and the one or two reasons that tipped it. -->
 
-## Alternatives considered
+## Pitfalls & limitations of the chosen option
 
-<!-- The realistic options not taken, and why. This is what makes the ADR worth keeping. For a contested multi-option call, a comparison table (criteria × options) often reads better than prose — see the optional table below. -->
-
-- **<Alternative A>** — rejected because <reason>.
-- **<Alternative B>** — rejected because <reason>.
-
-<!-- Optional — for contested multi-option decisions, compare on the criteria that matter:
-| Criterion | <Option A> | <Option B> (chosen) |
-|-----------|------------|---------------------|
-| <e.g. simplicity>  | … | … |
-| <e.g. correctness> | … | … |
-| <e.g. scale>       | … | … |
--->
+<!-- Be honest about what this choice makes harder or where it breaks down — the thing a future engineer will hit.
+e.g. "a single hot partition still caps one mega-event's throughput; mitigated by the waiting room, revisit if a
+single event exceeds X." -->
 
 ## Consequences
 
-<!-- What this makes easy, what it makes hard, and what we now have to live with. Be honest about the downsides. -->
-
-- **Positive:** <…>
-- **Negative / trade-off:** <…>
+- **Positive:** <what becomes easy / safe>
+- **Negative / trade-off:** <what we now live with>
+- **Follow-ups:** <anything to revisit, or a condition that would reopen this decision>

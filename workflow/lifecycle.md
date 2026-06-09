@@ -74,7 +74,7 @@ Every run keeps a **`specs/<run>/STATUS.md`** (the *captain's log*) so work surv
 
 **Activities:**
 1. Surface the **critical design questions** — the few decisions that dominate the architecture (e.g. "how do concurrent requests stay correct?", "where does state live?", "what's the consistency model?"). Answer each, with the trade-off considered. Log them in the HLD.
-2. Draw the architecture as **UML** at the right C4 levels (inline Mermaid by default; or validated SVGs via the optional Kroki toolchain — `tools/diagrams.md`):
+2. Draw the architecture as **UML** at the right C4 levels, using the run's configured diagram renderer (default **D2**; see `tools/diagrams.md`) — validated SVGs into the run's `diagrams/`, or inline Mermaid as the no-setup fallback:
    - **Context** (level 1): the system as a box, its users and external systems.
    - **Container** (level 2): the deployable/runnable pieces and the data stores.
    - **Component** (level 3): the major internal components and responsibilities.
@@ -122,7 +122,7 @@ Every run keeps a **`specs/<run>/STATUS.md`** (the *captain's log*) so work surv
 **Inputs:** `hld.md`, `stack.md`, the requirements for this feature.
 
 **Activities:** for each feature in the HLD feature list (`specs/<run>/features/<feature>/`):
-1. Draw a **class diagram** (Mermaid `classDiagram`, or `plantuml` via the optional Kroki toolchain — `tools/diagrams.md`) — the types, their key methods, and relationships.
+1. Draw a **class diagram** using the run's configured renderer (default **D2** `shape: class`; see `tools/diagrams.md`) — the types, their key methods, and relationships.
 2. Define the **interfaces / contracts** — public method signatures, API endpoints, message shapes.
 3. Specify the **concrete data model** — tables/collections, fields, types, indexes, constraints.
 4. Specify the **error model** — failure modes, what each returns/raises, transaction/rollback behavior.
@@ -134,7 +134,7 @@ Every run keeps a **`specs/<run>/STATUS.md`** (the *captain's log*) so work surv
 
 **Exit criteria:** a builder agent could implement the feature from this document alone (apply the One-Line Test from `principles.md`). If not, the LLD is underspecified — finish it.
 
-**Watch-for:** **Over-engineering** — class hierarchies and patterns the requirements don't need. Design the smallest correct structure.
+**Watch-for:** **Over-engineering** — class hierarchies and patterns the requirements don't need. Design the smallest correct structure. Also: cover **every** feature in the HLD feature list (mark any deferred one explicitly) — never imply an LLD that doesn't exist, and keep STATUS honest about what's actually been designed.
 
 ---
 

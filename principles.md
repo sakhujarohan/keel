@@ -38,6 +38,9 @@ The human decides *what* and *whether* (confirmed at gates). The agent decides *
 ### P10 — Small, reversible steps
 Prefer many small, verifiable changes over one large leap. Each task in Phase 6 should be independently testable and, ideally, independently revertible. Keep the build green; integrate continuously.
 
+### P11 — Readable-first
+Every artifact must read as plain prose to a human who doesn't know the ID scheme. IDs (`R`/`N`/`T`) are *labels on readable sentences*, never the content — write "**R4 — Hold inventory during checkout:** when a buyer selects seats, place a hold…", not "Serves: R4, R5, N1". Concentrate end-to-end traceability in the single **Validation Ledger** (Phase 7); don't sprinkle ID cross-references through every line. If a doc only makes sense by flipping back to decode IDs, it has failed — rewrite it.
+
 ---
 
 ## Named Anti-Patterns
@@ -54,6 +57,7 @@ When you notice one, **name it explicitly** and return to the gate or principle 
 | **Over-engineering** | Abstractions, layers, or config for needs that don't exist. | Smallest correct solution (P4) |
 | **Invented facts** | Plausible numbers or constraints with no source. | No invented facts (P7) |
 | **Vibe-coding** | Writing code with no spec to trace it to. | Specs as source of truth (P1, P3) |
+| **ID-soup** | Docs dense with raw IDs, unreadable without cross-referencing. | Readable-first (P11) |
 
 ---
 

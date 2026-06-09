@@ -34,7 +34,7 @@ These are the questions a reviewer will push on. Answer them before drawing boxe
 
 > **Right-size the C4 levels:** include the levels that add information; collapse adjacent levels when one would just duplicate another (a small service often merges Container + Component into one diagram). On the fast path, one component sketch + one sequence diagram is enough.
 
-> **Diagrams:** inline Mermaid (below) is the zero-dep default. If the Kroki toolchain is set up (see `tools/diagrams.md`), generate validated SVGs instead — `c4plantuml` for architecture, `plantuml` for flows, `erd` for the data model — saved to the run's `diagrams/` and embedded as SVG + source in a `<details>` block.
+> **Diagrams:** generate real SVGs via the Kroki toolchain using the run's **configured renderer** (`Diagram renderer` in `context.md`; default **D2** — architecture as a D2 graph, flows as `shape: sequence_diagram`, data model as `shape: sql_table`). Save to the run's `diagrams/` and embed each as an image + its source in a `<details>` block. See `tools/diagrams.md` for the per-type syntax. Inline Mermaid is the no-setup fallback.
 
 ## C4 Level 1 — System Context
 
@@ -93,14 +93,32 @@ sequenceDiagram
     S-->>C: response
 ```
 
-## Conceptual Data Model
+## Data Model
 
-<!-- Entities and relationships only. No column types or indexes yet (that's Phase 4). -->
+<!-- The entities, their KEY fields, and relationships — enough to see how data is stored at a glance. Concrete column types/indexes come in the LLD. Generate the diagram as a real SVG using the configured renderer (default D2 `shape: sql_table`; see `tools/diagrams.md`) into `diagrams/`; inline Mermaid below is the fallback. -->
 
-```mermaid
-erDiagram
-    ENTITY_A ||--o{ ENTITY_B : has
+| Entity | Key fields | Relationships |
+|--------|-----------|---------------|
+| <EntityA> | id, name, … | has many <EntityB> |
+| <EntityB> | id, a_id (FK), … | belongs to <EntityA> |
+
+![Entity-relationship diagram](diagrams/data-model.svg)
+
+<details><summary>diagram source (erd)</summary>
+
 ```
+[EntityA]
+*id
+name
+
+[EntityB]
+*id
++a_id
+
+EntityA 1--* EntityB
+```
+
+</details>
 
 ---
 
