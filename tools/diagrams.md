@@ -35,7 +35,7 @@ A run uses one renderer for consistency. Excalidraw is intentionally **not** sup
 | LLD — concrete schema | schema | `shape: sql_table` | `erDiagram` |
 | (optional) activity / use-case / deployment | flow / actors / topology | graph + shapes/containers | `flowchart` + subgraphs |
 
-Worked, validated examples of all of these live in `specs/ticket-booking-v3/diagrams/samples/` (D2, D2-sketch, Mermaid side by side).
+Worked, validated examples of all of these live in `examples/ticket-booking/diagrams/samples/` (D2, D2-sketch, Mermaid side by side).
 
 ## The pattern (keeps the doc the source of truth, per `principles.md`)
 

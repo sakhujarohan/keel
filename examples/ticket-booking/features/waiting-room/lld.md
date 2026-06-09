@@ -8,7 +8,7 @@ updated: 2026-06-07
 
 # LLD — waiting-room
 
-**Status:** [SIMULATED] G4 · Run: ticket-booking-v3 · Stack: Java/Spring + Redis
+**Status:** [SIMULATED] G4 · Run: ticket-booking · Stack: Java/Spring + Redis
 **Delivers:** paced admission to the on-sale (R3) so the core never tips over (N2, N6).
 
 ## What this feature does

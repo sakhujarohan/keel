@@ -8,7 +8,7 @@ updated: 2026-06-07
 
 # LLD — catalog-search
 
-**Status:** [SIMULATED] G4 · Run: ticket-booking-v3 · Stack: Java/Spring + Elasticsearch (+ read replica)
+**Status:** [SIMULATED] G4 · Run: ticket-booking · Stack: Java/Spring + Elasticsearch (+ read replica)
 **Delivers:** browse/search events and read a seat map (R1, R2). Eventually consistent by design (N5) so it stays fast and available while checkout is paced (N6).
 
 ## What this feature does

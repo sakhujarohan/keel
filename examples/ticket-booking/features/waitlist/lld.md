@@ -8,7 +8,7 @@ updated: 2026-06-07
 
 # LLD — waitlist
 
-**Status:** [SIMULATED] G4 · Run: ticket-booking-v3 · Stack: Java/Spring + Postgres + Kafka
+**Status:** [SIMULATED] G4 · Run: ticket-booking · Stack: Java/Spring + Postgres + Kafka
 **Delivers:** join a waitlist when sold out and get notified when inventory frees up (R9, R11).
 
 ## What this feature does

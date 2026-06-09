@@ -8,7 +8,7 @@ updated: 2026-06-07
 
 # LLD — seat-hold
 
-**Status:** [SIMULATED] G4 · Run: ticket-booking-v3 · Stack: Java/Spring + Postgres + Redis
+**Status:** [SIMULATED] G4 · Run: ticket-booking · Stack: Java/Spring + Postgres + Redis
 **Delivers:** the no-oversell hold (R4, R5), hold expiry (R7), per-user purchase limits (R8) — the system's hard correctness invariant (N1, N4).
 
 ## What this feature does

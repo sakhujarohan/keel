@@ -8,7 +8,7 @@ updated: 2026-06-07
 
 # LLD — refunds
 
-**Status:** [SIMULATED] G4 · Run: ticket-booking-v3 · Stack: Java/Spring + Postgres + PSP adapter + Kafka
+**Status:** [SIMULATED] G4 · Run: ticket-booking · Stack: Java/Spring + Postgres + PSP adapter + Kafka
 **Delivers:** cancel a confirmed order within policy, refund it, release the inventory, and restore the purchase limit (R12).
 
 ## What this feature does

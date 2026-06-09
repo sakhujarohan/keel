@@ -8,7 +8,7 @@ updated: 2026-06-07
 
 # LLD — checkout-saga
 
-**Status:** [SIMULATED] G4 · Run: ticket-booking-v3 · Stack: Java/Spring + Postgres + Kafka + PSP adapter
+**Status:** [SIMULATED] G4 · Run: ticket-booking · Stack: Java/Spring + Postgres + Kafka + PSP adapter
 **Delivers:** pay → confirm with release-on-failure (R6, R7) and exactly-once money under retries (R10, N8).
 
 ## What this feature does

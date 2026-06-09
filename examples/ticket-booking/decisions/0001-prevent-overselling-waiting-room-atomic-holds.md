@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-06-07
-- **Run:** ticket-booking-v3
+- **Run:** ticket-booking
 
 ## Problem & forces
 

@@ -4,8 +4,14 @@ Worked examples produced by running keel end-to-end. Each folder is a complete r
 
 ## ticket-booking
 
-A concurrent ticket-booking service (Go + Postgres) taken through the design spine (Phases 0–5) plus an ADR — keel's validation dry run. Worth a look for: the captain's-log `STATUS.md`, EARS requirements with an explicit out-of-scope list, a C4 high-level design, a stack decision traced to NFRs, a per-feature LLD, dependency-ordered tasks, and `decisions/0001` (preventing double-booking with a unique constraint).
+A high-scale **event-ticketing platform** (Java/Spring · Postgres · Redis · Kafka · Elasticsearch) taken through the design spine (Phases 0–5) at the `production` rigor profile — keel's canonical complex example, the kind of problem a hard system-design round would hand you.
 
-Notes:
-- It predates the project-codebook step, so it has no `conventions.md`.
-- In a real run, ADRs live in `decisions/` at the **project root**; here they're co-located under the example so it stays self-contained.
+Worth a look for:
+- **`requirements.md`** — 12 EARS requirements, 9 NFRs, performance targets, explicit assumptions and out-of-scope.
+- **`hld.md`** — a readable narrative plus **rendered D2 diagrams** (system context, containers, two flow sequences, ER data model) with their source in `<details>`, four critical design questions, and a feature list.
+- **`stack.md` + `conventions.md`** — choices traced to NFR drivers, and the per-project codebook (patterns + a "Do NOT" list).
+- **`decisions/`** — two full ADRs (no-oversell strategy; idempotent checkout saga) with options, pros/cons, and pitfalls.
+- **`features/*/lld.md`** — an LLD for every feature, with table-by-table schemas and D2 class diagrams; `seat-hold` carries readable Goal/Done-when tasks.
+- **`diagrams/`** — the committed D2 SVGs, plus **`diagrams/samples/`**, a 24-SVG renderer gallery (D2 / D2-sketch / Mermaid across 8 diagram types) used to pick keel's default renderer.
+
+Note: in a real run, ADRs live in `decisions/` at the **project root**; here they're co-located under the example so it stays self-contained.
