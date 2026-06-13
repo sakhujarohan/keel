@@ -17,5 +17,6 @@ updated: <YYYY-MM-DD>
 - **Rigor profile:** <prototype | standard | production> (see `profiles/`)
 - **Overrides:** <e.g. observability → production; or none>
 - **Diagram renderer:** d2 <default | mermaid | d2-sketch — see `tools/diagrams.md`>
+- **Renderer status:** <installed | fallback-mermaid (accepted by <human-name> on <YYYY-MM-DD>)>
 
 **Problem (one line):** <the problem this run solves>

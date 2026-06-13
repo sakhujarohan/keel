@@ -1,7 +1,7 @@
 ---
 artifact: review
-phase: 7
-gate: G5
+phase: 8
+gate: G6
 status: draft        # draft | signed-off
 updated: <YYYY-MM-DD>
 ---
@@ -29,6 +29,18 @@ known limitation — an undocumented gap is a defect. Delete these comments.
 | R2 | | | |
 
 Also reconcile the **Performance Targets** table in `requirements.md` — fill its "Achieved" column from the build / load results.
+
+## Spec-Compliance Ledger
+
+<!-- Final backstop: every Literal Mandate from requirements.md → what was actually shipped → match?
+A violated mandate that was not caught at G5 (Spec-Compliance Lock) is a critical defect. -->
+
+| Mandate ID | Mandate (verbatim) | Implemented as | Match? |
+|------------|--------------------|---------------|--------|
+| M1 | <e.g. HTTP 201 on success> | <e.g. returns 201 in PaymentController.create()> | ✓ / ✗ |
+| M2 | | | |
+
+Any ✗ here is a blocker — fix before G6 or obtain explicit human sign-off on the exception.
 
 ---
 
@@ -71,8 +83,9 @@ Also reconcile the **Performance Targets** table in `requirements.md` — fill i
 
 ---
 
-## G5 — Ship Review
+## G6 — Ship Review
 - [ ] Checklist passes at the profile's level
+- [ ] Spec-Compliance Ledger complete — every Literal Mandate is ✓ or has a documented, human-confirmed exception
 - [ ] Known limitations documented (with how you'd close them)
 - [ ] A stranger could run and understand it from the README
 - [ ] **Human has confirmed it's ready to ship / submit**

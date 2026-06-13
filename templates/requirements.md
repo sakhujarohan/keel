@@ -70,10 +70,30 @@ Give each a stable ID. These IDs flow into HLD, LLD, tasks, and tests.
 
 ## Assumptions
 
-<!-- Deliberate defaults you are proceeding WITH (stated, not blocking) — distinct from Open Questions, which are UNKNOWNs that must be resolved. State each so a reviewer can challenge it. -->
+<!--
+Deliberate defaults you are proceeding WITH — distinct from Open Questions (UNKNOWNs that must be resolved).
+Each assumption must be CONFIRMED by the human before G1 passes — silently adopting an assumption is the
+"Silent-assumption" anti-pattern. Status: proposed → confirmed.
+-->
 
-- <e.g. an upstream gateway supplies a trusted user identity>
-- <e.g. single-region deployment for v1>
+| Assumption | Status |
+|------------|--------|
+| <e.g. an upstream gateway supplies a trusted user identity> | proposed |
+| <e.g. single-region deployment for v1> | proposed |
+
+## Literal Mandates
+
+<!--
+Verbatim, non-negotiable specifics the spec states directly. These are the inputs that power the G5
+Spec-Compliance Review (Phase 5) and the final Spec-Compliance Ledger (Phase 8). Each row must be
+traceable back to a specific line/section of the original brief.
+If the spec contains no literal mandates (unusual), write "None" explicitly — do not leave blank.
+-->
+
+| ID | Mandate (verbatim or close-paraphrase) | Source (section / line) |
+|----|----------------------------------------|------------------------|
+| M1 | <e.g. "The endpoint MUST return HTTP 201 on successful creation"> | <spec section 3.2> |
+| M2 | <e.g. "Error responses MUST NOT include customer financial data"> | <spec section 5.1> |
 
 ## Out of Scope (explicit)
 
@@ -95,6 +115,9 @@ Naming the boundary is what stops the design from sprawling.
 
 ## G1 — Requirements Lock
 
+- [ ] Clarify loop completed — agent surfaced a batched question list (or an explicit statement that no design-changing ambiguity exists)
+- [ ] All assumptions are `confirmed` — no assumption remains `proposed`
+- [ ] Literal Mandates table is populated (or explicitly noted as "None")
 - [ ] All design-changing open questions resolved (no blocking `UNKNOWN`)
 - [ ] Out-of-scope list is explicit
 - [ ] Every requirement has an ID and acceptance criteria

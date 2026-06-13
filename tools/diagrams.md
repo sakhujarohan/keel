@@ -14,12 +14,16 @@ Set `Diagram renderer:` in `specs/<run>/context.md`. Options, in keel's preferre
 
 A run uses one renderer for consistency. Excalidraw is intentionally **not** supported: Kroki's excalidraw renderer needs full Excalidraw JSON, not a text DSL, so an agent can't author it inline.
 
-## Setup (once per project, ~2 min)
+## Setup — Phase 0 action (agent runs this automatically at kickoff)
 
-1. **Install the server** (Python 3.10+): clone the suite, then in a venv `pip install -e packages/mcp-servers/kroki`. (See the suite's `packages/mcp-servers/kroki/docs/installation.md`.)
+The agent performs this setup as part of `/kickoff` (Phase 0, activity 3) — it is **not** optional manual setup. The agent bootstraps the renderer before writing `context.md`; the run's `Renderer status:` field records the outcome.
+
+1. **Install the server** (Python 3.10+): clone the suite (`https://github.com/sakhujarohan/mcp-skill-suite`), then in a venv `pip install -e packages/mcp-servers/kroki`. (See the suite's `packages/mcp-servers/kroki/docs/installation.md`.)
 2. **Enable the MCP:** copy `tools/mcp.json.example` to your project root as `.mcp.json` and adjust `command` (use `kroki-mcp` if on PATH, or the full venv path) / `KROKI_ENDPOINT`. Restart the agent.
 3. **(Optional) install the skill:** copy the suite's `packages/skills/diagram-generation/SKILL.md` → `.claude/skills/diagram-generation.md`.
-4. Confirm with `get_server_info` (expect `server_reachable: true`).
+4. Confirm with `get_server_info` (expect `server_reachable: true`). Set `Renderer status: installed` in `context.md`.
+
+**If the install fails:** surface the error and the Mermaid fallback option to the human. Wait for explicit acceptance — never adopt the fallback silently. Record `Renderer status: fallback-mermaid (accepted by <human> on <date>)` in `context.md`.
 
 **Privacy:** the public endpoint (`https://kroki.io`) receives your diagram source. For anything sensitive, self-host — `docker run -d -p 8000:8000 yuzutech/kroki` — and set `KROKI_ENDPOINT=http://localhost:8000`.
 

@@ -29,14 +29,15 @@ Every run keeps a **`specs/<run>/STATUS.md`** (the *captain's log*) so work surv
 2. Determine **mode**: new project (greenfield) · feature or change in an existing codebase.
 3. Determine the **time budget**. If it is tight (a spike, a tight deadline), switch to `workflow/fast-path.md` for the rest of the run — same gates, leaner artifacts.
 4. Choose the **rigor profile** (`prototype` / `standard` / `production`) and note any per-concern overrides. See `profiles/`.
-5. Write `specs/<run>/context.md` from `templates/context.md` — mode, budget, profile, overrides, one-line problem framing.
-6. Create `specs/<run>/STATUS.md` from `templates/status.md` (the captain's log — see Run State & Continuity above).
+5. **Bootstrap the diagram renderer.** Run the Kroki MCP setup from `tools/diagrams.md` (install the server, write `.mcp.json`, confirm with `get_server_info`). If the server responds `server_reachable: true`, the run uses D2 (default) or the renderer the human nominates; record the choice and set `Renderer status: installed` in `context.md`. **If the install fails**, surface the failure explicitly, present the Mermaid-code fallback, and wait for the human to accept it — never adopt the fallback silently.
+6. Write `specs/<run>/context.md` from `templates/context.md` — mode, budget, profile, overrides, one-line problem framing, diagram renderer and renderer status.
+7. Create `specs/<run>/STATUS.md` from `templates/status.md` (the captain's log — see Run State & Continuity above).
 
 **Artifact:** `specs/<run>/context.md` + `specs/<run>/STATUS.md`
 
-**Gate:** none — but confirm the mode and profile with the human before moving on.
+**Gate:** none — but confirm the mode, profile, and diagram renderer with the human before moving on.
 
-**Exit criteria:** mode, budget, and profile are written down.
+**Exit criteria:** mode, budget, and profile are written down; diagram renderer is installed and reachable (or the Mermaid fallback is explicitly accepted by the human and recorded in `context.md`).
 
 **Watch-for:** *Don't* start solving the problem here. Kickoff frames the run; it does not analyze the problem.
 
@@ -53,16 +54,17 @@ Every run keeps a **`specs/<run>/STATUS.md`** (the *captain's log*) so work surv
 2. Capture **non-functional requirements** — performance, scale, concurrency, consistency, availability, security — but only those the problem actually implies. Mark anything unstated as `UNKNOWN`. Set **performance targets** (numbers) for any quantified NFR, and record explicit **assumptions** (deliberate defaults you're proceeding with — distinct from open questions).
 3. List **constraints** — fixed tech, data formats, interfaces, deadlines.
 4. List **explicit out-of-scope** items. This is half the value of the phase: it is what stops scope-latch.
-5. **Clarify loop.** Ask the human every question whose answer would change the design. Batch the questions; don't dribble them. Keep asking until no design-changing ambiguity remains. For ambiguous or evolving problems, this loop is the whole game — *do not move on while the requirements are still moving.*
+5. **Clarify loop (mandatory — cannot skip).** Ask the human every question whose answer would change the design. Batch the questions; don't dribble them. The agent must present at least one of these: (a) a batched list of design-changing questions, or (b) an explicit written statement: *"No design-changing ambiguity found. Here are the assumptions I'm relying on — please confirm each."* Silently adopting assumptions without surfacing them is the **Silent-assumption** anti-pattern and blocks G1. Keep asking until no design-changing ambiguity remains. For ambiguous or evolving problems, this loop is the whole game — *do not move on while the requirements are still moving.*
 6. Assign each requirement a stable ID (`R1`, `R2`, …).
+7. Capture **Literal Mandates** — verbatim, non-negotiable specifics the spec states directly: exact HTTP status codes, exact response/error field sets, exact formats, exact protocol constraints. Each becomes a row in the Literal Mandates table in `requirements.md`. These are the inputs that power G5 Spec-Compliance Review.
 
 **Artifact:** `specs/<run>/requirements.md` (template: `templates/requirements.md`)
 
-**Gate:** 🚦 **G1 — Requirements Lock.** Present the requirements and the out-of-scope list. Ask explicitly: *"Are these complete and stable? May I lock them?"* **Propose no design until the human confirms.**
+**Gate:** 🚦 **G1 — Requirements Lock.** Present the requirements and the out-of-scope list. Ask explicitly: *"Are these complete and stable? May I lock them?"* **Propose no design until the human confirms.** G1 cannot pass while any assumption is `proposed` (unconfirmed) or any Literal Mandate row is missing.
 
-**Exit criteria:** human has confirmed the requirements are complete and stable; every requirement has an ID; out-of-scope is explicit; no `UNKNOWN` remains that would change the design.
+**Exit criteria:** human has confirmed the requirements are complete and stable; every requirement has an ID; out-of-scope is explicit; no `UNKNOWN` remains that would change the design; every assumption is explicitly confirmed by the human; Literal Mandates table is populated (or explicitly empty if the spec contains none).
 
-**Watch-for:** **Premature design** (sketching architecture in this phase), **scope-latch** (anchoring on the first reading). If the human keeps adding requirements, that's fine — it means the gate is doing its job. Stay in Phase 1.
+**Watch-for:** **Premature design** (sketching architecture in this phase), **scope-latch** (anchoring on the first reading), **Silent-assumption** (proceeding on an assumption the human has not confirmed). If the human keeps adding requirements, that's fine — it means the gate is doing its job. Stay in Phase 1.
 
 ---
 
@@ -138,11 +140,33 @@ Every run keeps a **`specs/<run>/STATUS.md`** (the *captain's log*) so work surv
 
 ---
 
-## Phase 5 — Task Breakdown (per feature)
+## Phase 5 — Spec-Compliance Review (per feature)
+
+**Purpose:** Verify that the feature's concrete design does not contradict any Literal Mandate from the locked `requirements.md`. Literal Mandates are the verbatim, non-negotiable specifics the spec states directly — exact HTTP status codes, exact response/error field sets, exact formats, exact protocol constraints. This is the gate where the "201 vs. 204" and "don't leak IBAN/BIC into error bodies" class of failures are caught *before* tasks are written and code is built.
+
+**Inputs:** `features/<feature>/lld.md` (G4 signed off) + the **Literal Mandates** table from `specs/<run>/requirements.md`.
+
+**Activities:** For each feature:
+1. Extract every endpoint, status code, response shape, and error model specified in `lld.md`.
+2. For each Literal Mandate, state what the LLD specifies and whether they match (✓ / ✗).
+3. For each ✗: **do not paper over it.** Either fix the LLD now (loop back to the earliest affected gate — G2, G3, or G4 as appropriate) or flag the divergence explicitly and obtain **human sign-off** on the deliberate exception before proceeding.
+4. Produce `specs/<run>/features/<feature>/spec-check.md` (template: `templates/spec-check.md`).
+
+**Artifact:** `specs/<run>/features/<feature>/spec-check.md`
+
+**Gate:** 🚦 **G5 — Spec-Compliance Lock.** Present the Spec-Compliance Ledger. Any ✗ without a human-confirmed exception blocks the gate. No tasks are written and no code is built until this passes.
+
+**Exit criteria:** every Literal Mandate either matches the LLD (✓) or has a human-confirmed documented exception.
+
+**Watch-for:** **Spec-divergence** — treating the ADR as the authoritative source for a literal mandate. If the ADR contradicts the spec, the spec wins; fix the ADR, not the spec. Also watch for Literal Mandates that were simply not listed in Phase 1 — if a new mandate surfaces here, add it to `requirements.md` and re-confirm G1 before proceeding.
+
+---
+
+## Phase 6 — Task Breakdown (per feature)
 
 **Purpose:** Decompose the LLD into atomic, testable, dependency-ordered tasks that one agent (or several in parallel) can execute.
 
-**Inputs:** `lld.md` for the feature.
+**Inputs:** `lld.md` for the feature + `spec-check.md` (G5 signed off).
 
 **Activities:**
 1. Break the work into **atomic tasks** — each independently testable, ideally independently revertible, sized to a single focused change.
@@ -160,7 +184,7 @@ Every run keeps a **`specs/<run>/STATUS.md`** (the *captain's log*) so work surv
 
 ---
 
-## Phase 6 — Build & Test
+## Phase 7 — Build & Test
 
 **Purpose:** Implement the tasks. Produce working, tested code.
 
@@ -183,23 +207,23 @@ Every run keeps a **`specs/<run>/STATUS.md`** (the *captain's log*) so work surv
 
 ---
 
-## Phase 7 — Harden & Review
+## Phase 8 — Harden & Review
 
 **Purpose:** Bring the work to the rigor the profile demands, and make it presentable / shippable.
 
 **Inputs:** the built feature(s), the rigor profile, `templates/review-checklist.md`.
 
 **Activities:**
-1. Run the **review checklist** (`templates/review-checklist.md`), scoped to the chosen profile — correctness, concurrency, error handling, observability, security, performance, docs. Complete its **Traceability & Validation Ledger** (every requirement → tests → status) and reconcile the Performance-Targets "Achieved" column.
+1. Run the **review checklist** (`templates/review-checklist.md`), scoped to the chosen profile — correctness, concurrency, error handling, observability, security, performance, docs. Complete its **Traceability & Validation Ledger** (every requirement → tests → status), run the **Spec-Compliance Ledger** (every Literal Mandate → implemented-as → match?), and reconcile the Performance-Targets "Achieved" column.
 2. Close gaps the checklist surfaces. Record any deliberate scope cuts ("no idempotency keys in this version, here's how I'd add them") in the README and/or an ADR.
 3. Write/finish the **README**: how to run, the approach and key decisions, known limitations, and — if relevant — how AI was used.
 4. Ensure every load-bearing decision made during the build has an **ADR** in `decisions/`.
 
 **Artifact:** completed review checklist, README, ADRs.
 
-**Gate:** 🚦 **G5 — Ship review.** Walk the human through the checklist results, known limitations, and the README. Confirm it's ready to ship/submit.
+**Gate:** 🚦 **G6 — Ship review.** Walk the human through the checklist results (including the Spec-Compliance Ledger), known limitations, and the README. Confirm it's ready to ship/submit.
 
-**Exit criteria:** checklist passes at the profile's level; known limitations are documented, not hidden; README lets a stranger run and understand it.
+**Exit criteria:** checklist passes at the profile's level; Spec-Compliance Ledger is complete (every Literal Mandate is ✓ or has a documented, human-confirmed exception); known limitations are documented, not hidden; README lets a stranger run and understand it.
 
 **Watch-for:** Hiding a limitation instead of documenting it. A known, documented gap is professional; an undocumented one is a defect.
 
@@ -212,5 +236,10 @@ The lifecycle is forward-flowing but not one-way. When a later phase invalidates
 1. **Name it** (which anti-pattern, if any).
 2. **Return to the earliest affected gate** — not the current step.
 3. **Update that artifact and re-confirm the gate**, then flow the change forward.
+
+Common loop-back triggers and their target gates:
+- A new Literal Mandate surfaces in Phase 5 (Spec-Compliance Review) → add it to `requirements.md` and re-confirm **G1**.
+- The spec-compliance check finds the LLD violated a mandate → fix the LLD and re-confirm **G4**, then re-run Phase 5.
+- A stack choice turns out to contradict a Literal Mandate → loop back to **G3**, fix the ADR, then flow forward through G4 and G5.
 
 Patching forward to avoid a loop-back is requirements-drift, and it is how designs rot. Looping back is cheap when caught early — which is exactly what the gates are for.

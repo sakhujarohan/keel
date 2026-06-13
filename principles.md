@@ -51,11 +51,13 @@ When you notice one, **name it explicitly** and return to the gate or principle 
 |--------------|--------------------|--------------|
 | **Premature design** | Sketching architecture before requirements are locked. | G1 (Requirements Lock) |
 | **Scope-latch** | Fixing on an early/partial reading; later requirements don't fit. | Phase-1 clarify loop + out-of-scope list |
+| **Silent-assumption** | Proceeding on an assumption the human hasn't confirmed — baking it into the design instead of surfacing it. | G1 confirmed-assumptions rule; Phase-1 clarify loop |
 | **Requirements-drift** | A new requirement quietly breaks the design; the agent patches forward instead of looping back. | Loop back to the earliest affected gate (P1) |
 | **Gate-skipping** | "It's simple, let's just code it." | P2 |
 | **Context-loss** | A later phase forgets why an earlier choice was made. | Traceability IDs (P3) |
 | **Over-engineering** | Abstractions, layers, or config for needs that don't exist. | Smallest correct solution (P4) |
 | **Invented facts** | Plausible numbers or constraints with no source. | No invented facts (P7) |
+| **Spec-divergence** | An ADR or LLD decision that silently contradicts a Literal Mandate the spec states explicitly (e.g. choosing 204 when the spec mandates 201; leaking fields the spec forbids in error bodies). The spec wins; fix the ADR/LLD, not the spec. | G5 (Spec-Compliance Lock) + G6 Spec-Compliance Ledger |
 | **Vibe-coding** | Writing code with no spec to trace it to. | Specs as source of truth (P1, P3) |
 | **ID-soup** | Docs dense with raw IDs, unreadable without cross-referencing. | Readable-first (P11) |
 

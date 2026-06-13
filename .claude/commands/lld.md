@@ -13,4 +13,4 @@ Produce `specs/<run>/features/<feature>/lld.md`:
 - Explicitly show how any concurrency/consistency NFRs are satisfied.
 - Trace every type/contract to requirement IDs.
 
-Apply the **One-Line Test**: could a builder implement this from this doc alone? If not, it's underspecified — finish it. Then STOP at **G4 — LLD sign-off**. Watch for *over-engineering* — design the smallest correct structure. Next: `/tasks`.
+Apply the **One-Line Test**: could a builder implement this from this doc alone? If not, it's underspecified — finish it. Then STOP at **G4 — LLD sign-off**. Watch for *over-engineering* — design the smallest correct structure. Next: `/spec-check` (Phase 5 — diff every Literal Mandate against the LLD before writing any tasks).

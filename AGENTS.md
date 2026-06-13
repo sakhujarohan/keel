@@ -22,14 +22,15 @@ When in doubt, stop at the gate and ask. A blocked agent costs minutes; a wrong 
 
 | # | Phase | Artifact (from `templates/`) | Gate — human sign-off |
 |---|-------|------------------------------|------------------------|
-| 0 | **Kickoff** | `specs/<run>/context.md` | — |
-| 1 | **Requirements** | `specs/<run>/requirements.md` | **G1 — Requirements Lock** *(no design before this)* |
+| 0 | **Kickoff** | `specs/<run>/context.md` | — *(renderer bootstrapped here)* |
+| 1 | **Requirements** | `specs/<run>/requirements.md` | **G1 — Requirements Lock** *(clarify loop + all assumptions confirmed + Literal Mandates captured)* |
 | 2 | **High-Level Design** | `specs/<run>/hld.md` | **G2 — HLD sign-off** |
 | 3 | **Stack Selection** | `specs/<run>/stack.md` + `conventions.md` | **G3 — Stack Lock** |
 | 4 | **Low-Level Design** | `specs/<run>/features/<feature>/lld.md` | **G4 — LLD sign-off** (per feature) |
-| 5 | **Task Breakdown** | `specs/<run>/features/<feature>/tasks.md` | review |
-| 6 | **Build & Test** | code + tests | — |
-| 7 | **Harden & Review** | `review-checklist.md`, ADRs in `decisions/` | **G5 — Ship review** |
+| 5 | **Spec-Compliance Review** | `specs/<run>/features/<feature>/spec-check.md` | **G5 — Spec-Compliance Lock** *(LLD vs. Literal Mandates; per feature)* |
+| 6 | **Task Breakdown** | `specs/<run>/features/<feature>/tasks.md` | review |
+| 7 | **Build & Test** | code + tests | — |
+| 8 | **Harden & Review** | `review-checklist.md`, ADRs in `decisions/` | **G6 — Ship review** |
 
 The full per-phase playbook — inputs, activities, exit criteria — is in **`workflow/lifecycle.md`**. Read it before running a phase. For time-boxed or rapid work, read **`workflow/fast-path.md`**, which compresses the artifacts without removing the gates.
 
@@ -41,18 +42,20 @@ Name them out loud when you catch one. Each maps to a gate or principle that pre
 
 - **Premature design** — proposing architecture before requirements are locked. *Prevented by G1.*
 - **Scope-latch** — anchoring on an early or partial reading of the problem and missing requirements that surface later. *Prevented by the Phase-1 clarify loop and explicit out-of-scope list.*
+- **Silent-assumption** — proceeding on a default the human never confirmed, baking it into the design without surfacing it. *Prevented by G1's confirmed-assumptions rule; the clarify loop is mandatory.*
 - **Requirements-drift** — a new requirement appears mid-build and silently invalidates the design. *Handled by looping back to the earliest affected gate, not patching forward.*
 - **Gate-skipping** — jumping to code because the problem "looks simple." *Prevented by the Prime Directive.*
 - **Context-loss** — a later phase forgetting the rationale of an earlier one. *Prevented by traceability IDs that flow requirement → design → task → test.*
 - **Over-engineering** — speculative abstraction for needs that do not exist yet. *Prevented by the smallest-correct-solution principle.*
 - **Invented facts** — fabricating a number, constraint, or capability. *If unknown, write `UNKNOWN` and ask. Never guess a fact.*
+- **Spec-divergence** — an ADR or LLD choice that silently contradicts a Literal Mandate (e.g. choosing 204 when the spec says 201; leaking fields the spec forbids). *The spec wins; fix the design. Caught by G5 (Spec-Compliance Lock) and the G6 Spec-Compliance Ledger.*
 - **Vibe-coding** — writing code with no spec to trace it to. *Every line of code traces to a task; every task traces to a requirement.*
 
 ---
 
 ## How to Start a Run
 
-**Claude Code:** run `/kickoff` and follow the prompts. The phase commands are `/kickoff → /requirements → /hld → /stack → /lld → /tasks → /review`. Session commands: `/resume` at the start, `/status` to refresh the dashboard, `/handoff` before you stop.
+**Claude Code:** run `/kickoff` and follow the prompts. The phase commands are `/kickoff → /requirements → /hld → /stack → /lld → /spec-check → /tasks → /implement → /review`. Session commands: `/resume` at the start, `/status` to refresh the dashboard, `/handoff` before you stop.
 
 **Any other agent:** open `workflow/lifecycle.md` and execute Phase 0. Create `specs/<run>/` for this piece of work (`<run>` = a short kebab-case name for the feature or project).
 

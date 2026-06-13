@@ -12,7 +12,7 @@ Delete this comment in the real file.
 <!-- DERIVED by /status — do not hand-edit. Glyphs: ✓ signed-off · ▶ in progress · — not reached. -->
 
 - **Phase:** 0 / 8 — Kickoff
-- **Gates:** G1 — · G2 — · G3 — · G4 — · G5 —
+- **Gates:** G1 — · G2 — · G3 — · G4 — · G5 — · G6 —
 - **Tasks:** 0 / 0 done
 - **Next action:** `/requirements`
 
