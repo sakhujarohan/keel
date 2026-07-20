@@ -14,6 +14,25 @@ import { createGitAnchor } from "../src/anchor/git.js";
 import { buildContext } from "../src/check/context.js";
 import { CATALOG, requireGate, runChecks } from "../src/check/engine.js";
 import { commitSeal, prepareSeal } from "../src/gate/operations.js";
+import { setArtifactState } from "../src/project/write.js";
+
+/** Seal a gate the way the CLI does: hash the signed content, append the entry, then write the
+ *  frontmatter so the working tree matches the seal. A fixed date keeps the two in step. */
+const SEAL_DATE = "2026-07-21";
+async function sealGate(
+  repoRoot: string,
+  run: string,
+  gate: "G1" | "G2",
+  artifact: string,
+): Promise<void> {
+  const anchor = createGitAnchor(repoRoot);
+  const now = () => new Date(`${SEAL_DATE}T10:00:00.000Z`);
+  await commitSeal({
+    repoRoot,
+    prepared: await prepareSeal({ repoRoot, anchor, run, gate, artifact, now }),
+  });
+  await setArtifactState({ repoRoot, path: artifact, status: "signed-off", updated: SEAL_DATE });
+}
 
 const exec = promisify(execFile);
 const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), "fixtures");
@@ -185,16 +204,7 @@ describe("gate rules against real seals", () => {
     await git(["add", "-A"]);
     await git(["commit", "-q", "-m", "seed"]);
 
-    await commitSeal({
-      repoRoot: root,
-      prepared: await prepareSeal({
-        repoRoot: root,
-        anchor: createGitAnchor(root),
-        run: "demo",
-        gate: "G1",
-        artifact: "specs/demo/requirements.md",
-      }),
-    });
+    await sealGate(root, "demo", "G1", "specs/demo/requirements.md");
 
     const report = runChecks(await contextFor(root));
     const hldBlocked = report.findings.filter(
@@ -208,16 +218,8 @@ describe("gate rules against real seals", () => {
     await git(["add", "-A"]);
     await git(["commit", "-q", "-m", "seed"]);
 
-    const anchor = createGitAnchor(root);
-    for (const [gate, artifact] of [
-      ["G1", "specs/demo/requirements.md"],
-      ["G2", "specs/demo/hld.md"],
-    ] as const) {
-      await commitSeal({
-        repoRoot: root,
-        prepared: await prepareSeal({ repoRoot: root, anchor, run: "demo", gate, artifact }),
-      });
-    }
+    await sealGate(root, "demo", "G1", "specs/demo/requirements.md");
+    await sealGate(root, "demo", "G2", "specs/demo/hld.md");
 
     await write("specs/demo/requirements.md", "# Requirements\n\nrewritten after signing\n");
 
@@ -240,16 +242,7 @@ describe("gate rules against real seals", () => {
     await git(["add", "-A"]);
     await git(["commit", "-q", "-m", "seed"]);
 
-    await commitSeal({
-      repoRoot: root,
-      prepared: await prepareSeal({
-        repoRoot: root,
-        anchor: createGitAnchor(root),
-        run: "demo",
-        gate: "G1",
-        artifact: "specs/demo/requirements.md",
-      }),
-    });
+    await sealGate(root, "demo", "G1", "specs/demo/requirements.md");
 
     const report = runChecks(await contextFor(root));
     expect(report.findings.some((f) => f.rule === "KC-03")).toBe(true);
@@ -271,16 +264,7 @@ describe("requireGate — the hook path", () => {
   });
 
   it("passes once the gate is sealed", async () => {
-    await commitSeal({
-      repoRoot: root,
-      prepared: await prepareSeal({
-        repoRoot: root,
-        anchor: createGitAnchor(root),
-        run: "demo",
-        gate: "G1",
-        artifact: "specs/demo/requirements.md",
-      }),
-    });
+    await sealGate(root, "demo", "G1", "specs/demo/requirements.md");
 
     const report = requireGate({ ctx: await contextFor(root), run: "demo", gate: "G1" });
     expect(report.exitCode).toBe(0);
@@ -288,16 +272,7 @@ describe("requireGate — the hook path", () => {
   });
 
   it("blocks again the moment the sealed artifact is edited", async () => {
-    await commitSeal({
-      repoRoot: root,
-      prepared: await prepareSeal({
-        repoRoot: root,
-        anchor: createGitAnchor(root),
-        run: "demo",
-        gate: "G1",
-        artifact: "specs/demo/requirements.md",
-      }),
-    });
+    await sealGate(root, "demo", "G1", "specs/demo/requirements.md");
     await write("specs/demo/requirements.md", "# Requirements\n\nedited\n");
 
     const report = requireGate({ ctx: await contextFor(root), run: "demo", gate: "G1" });

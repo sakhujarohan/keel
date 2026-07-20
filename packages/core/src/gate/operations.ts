@@ -6,9 +6,12 @@
  * them makes "print before you write" structural rather than a habit the CLI might forget.
  */
 
-import type { GitAnchor } from "../anchor/git.js";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+import { blobId, type GitAnchor } from "../anchor/git.js";
 import { type GateEvent, isKeelOwnedPath } from "../ledger/event.js";
 import { appendGateEvent, readLedger, type SealKey } from "../ledger/ledger.js";
+import { applyArtifactState } from "../model/frontmatter-state.js";
 import type { Gate } from "../model/types.js";
 import { GateRefusal } from "./refusal.js";
 
@@ -35,7 +38,16 @@ export async function prepareSeal(
 ): Promise<PreparedSeal> {
   const { repoRoot, anchor, run, gate, artifact, allowDirty = false } = args;
 
-  const context = await gatherContext({ repoRoot, anchor, artifact });
+  // Seal the artifact as it will be *once signed*: sealing flips its frontmatter to signed-off,
+  // and if we hashed the pre-flip content the seal would break itself the instant the projection
+  // is written. Hashing the post-flip content keeps the working tree matching the seal.
+  const context = await gatherContext({
+    repoRoot,
+    anchor,
+    artifact,
+    sealAs: "signed-off",
+    now: args.now,
+  });
   const tree = await anchor.treeStatus();
 
   // Keel's own directory is exempt. Sealing writes the ledger, so counting it as dirt would mean
@@ -93,7 +105,13 @@ export async function commitSeal(args: {
 /** Reopening records intent; it never erases what came before. */
 export async function reopenGate(args: GateArgs): Promise<GateEvent> {
   const { repoRoot, anchor, run, gate, artifact } = args;
-  const context = await gatherContext({ repoRoot, anchor, artifact });
+  const context = await gatherContext({
+    repoRoot,
+    anchor,
+    artifact,
+    sealAs: "reopened",
+    now: args.now,
+  });
 
   const entry: GateEvent = {
     run,
@@ -115,8 +133,11 @@ async function gatherContext(args: {
   repoRoot: string;
   anchor: GitAnchor;
   artifact: string;
+  /** The state the frontmatter will hold once this event is applied — what we hash. */
+  sealAs: "signed-off" | "reopened";
+  now?: () => Date;
 }): Promise<{ hash: string; actor: string; commit: string }> {
-  const { anchor, artifact } = args;
+  const { repoRoot, anchor, artifact, sealAs } = args;
 
   if (!(await anchor.isRepository())) {
     throw new GateRefusal({
@@ -145,8 +166,10 @@ async function gatherContext(args: {
     });
   }
 
-  const hash = (await anchor.hashObjects([artifact])).get(artifact) ?? null;
-  if (hash === null) {
+  let raw: string;
+  try {
+    raw = await readFile(join(repoRoot, artifact), "utf8");
+  } catch {
     throw new GateRefusal({
       reason: "artifact-missing",
       message: `${artifact} does not exist, so there is nothing to seal.`,
@@ -154,9 +177,19 @@ async function gatherContext(args: {
     });
   }
 
+  // Hash the artifact as it will read once its state frontmatter is set. Falls back to the raw
+  // bytes when the file has no state frontmatter to project (which is fine — nothing will change
+  // it either). This is what keeps a seal from breaking the moment its own projection is written.
+  const projected = applyArtifactState({ raw, status: sealAs, updated: dateOf(args.now) });
+  const hash = blobId(projected.ok ? projected.text : raw);
+
   return { hash, actor, commit };
 }
 
 function timestamp(now: (() => Date) | undefined): string {
   return (now?.() ?? new Date()).toISOString();
+}
+
+function dateOf(now: (() => Date) | undefined): string {
+  return (now?.() ?? new Date()).toISOString().slice(0, 10);
 }

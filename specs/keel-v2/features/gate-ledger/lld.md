@@ -16,6 +16,9 @@ This is the feature that makes a sign-off *mean* something: an append-only, hash
 > **Amendment 1 (2026-07-20, found during build) — the dirty-tree check ignores `.keel/`.**
 > Sealing writes the ledger, which leaves `.keel/` uncommitted. Counting that as dirt meant the *second* gate of any session was always refused — the first seal poisoned the next. The exemption is scoped to Keel's own directory: the check exists to guarantee the **artifact** is committed and the seal anchors to a real commit, and the ledger is Keel's record rather than the work being signed. (git reports the whole directory as `.keel/` while untracked, so the test is by prefix, not by exact filename.)
 
+> **Amendment 2 (2026-07-21, found by the CLI end-to-end test) — the seal hashes the *post-sign* content.**
+> Two sealed decisions were in direct conflict: ADR 0002 verifies a seal against the working tree, while A5 has `gate pass` write `status: signed-off` into the artifact's frontmatter. Sealing the *pre-flip* content and then writing the flip broke the seal the instant it was created — every gate sealed itself broken. **Resolution:** `prepareSeal` hashes the artifact as it will read once signed (`applyArtifactState(raw, "signed-off", today)`), so the working tree matches the seal after the projection runs. This keeps M1 literally true — the stored hash is still `git hash-object` of the bytes that end up on disk — and makes "the signed content" mean exactly that. Consequence, now a property of the design: **a seal and its frontmatter projection are a pair.** `commitSeal` must be followed by `setArtifactState`; between them the seal reads broken, which `keel check` reports and re-running the pair repairs. The shared transform lives in `model/frontmatter-state.ts` so the hash and the write can never disagree by a byte.
+
 ---
 
 ## Class / Type Design

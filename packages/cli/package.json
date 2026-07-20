@@ -1,0 +1,21 @@
+{
+  "name": "@keel-dev/cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Keel — gate enforcement for AI-assisted development",
+  "license": "MIT",
+  "bin": {
+    "keel": "./src/main.ts"
+  },
+  "exports": {
+    ".": "./src/main.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@keel-dev/core": "*",
+    "commander": "^14.0.2"
+  }
+}

@@ -10,6 +10,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { KeelError } from "../model/errors.js";
+import { applyArtifactState } from "../model/frontmatter-state.js";
 import type { ArtifactStatus, RunEntry } from "../model/types.js";
 import { renderNowBlock, SESSION_LOG_HEADING } from "./render.js";
 import type { RunState } from "./state.js";
@@ -51,9 +52,6 @@ export async function writeStatus(args: {
   return { path, changed: true };
 }
 
-const STATUS_LINE = /^status:[ \t]*.*$/m;
-const UPDATED_LINE = /^updated:[ \t]*.*$/m;
-
 export async function setArtifactState(args: {
   repoRoot: string;
   path: string;
@@ -64,55 +62,28 @@ export async function setArtifactState(args: {
   const absolute = join(args.repoRoot, args.path);
   const raw = await read(absolute, args.path);
 
-  const frontmatter = frontmatterRange(raw);
-  if (!frontmatter) {
+  // The identical transform gate-ledger hashed when it sealed, so the written bytes match the
+  // seal to the byte and the projection never breaks the seal it belongs to.
+  const result = applyArtifactState({ raw, status: args.status, updated: args.updated });
+  if (!result.ok) {
+    const detail =
+      result.reason === "no-frontmatter"
+        ? "has no frontmatter block, so there is no state to set"
+        : result.reason === "missing-status"
+          ? "frontmatter has no `status:` line to update"
+          : "frontmatter has no `updated:` line to update";
     throw new KeelError({
       code: "ENV_UNREADABLE",
-      message: `${args.path} has no frontmatter block, so there is no state to set.`,
-      nextAction: `Add a --- block to ${args.path}, then re-run.`,
+      message: `${args.path} ${detail}.`,
+      nextAction: `Fix the frontmatter of ${args.path}, then re-run.`,
       path: absolute,
     });
   }
 
-  const block = raw.slice(frontmatter.start, frontmatter.end);
-  // Inserting a missing key would be authoring, which M6 forbids — so demand it already exists.
-  for (const [name, pattern] of [
-    ["status", STATUS_LINE],
-    ["updated", UPDATED_LINE],
-  ] as const) {
-    if (!pattern.test(block)) {
-      throw new KeelError({
-        code: "ENV_UNREADABLE",
-        message: `${args.path} frontmatter has no \`${name}:\` line to update.`,
-        nextAction: `Add \`${name}:\` to the frontmatter of ${args.path}, then re-run.`,
-        path: absolute,
-      });
-    }
-  }
+  if (!result.changed) return { path: args.path, changed: false };
 
-  const updatedBlock = block
-    .replace(STATUS_LINE, `status: ${args.status}`)
-    .replace(UPDATED_LINE, `updated: ${args.updated}`);
-
-  const next = raw.slice(0, frontmatter.start) + updatedBlock + raw.slice(frontmatter.end);
-  if (next === raw) return { path: args.path, changed: false };
-
-  await writeFile(absolute, next, "utf8");
+  await writeFile(absolute, result.text, "utf8");
   return { path: args.path, changed: true };
-}
-
-/** Character range of the YAML between the opening and closing `---` lines. */
-function frontmatterRange(raw: string): { start: number; end: number } | null {
-  const lines = raw.split("\n");
-  if (lines[0]?.trim() !== "---") return null;
-
-  let offset = lines[0].length + 1;
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i] ?? "";
-    if (line.trim() === "---") return { start: lines[0].length + 1, end: offset };
-    offset += line.length + 1;
-  }
-  return null;
 }
 
 async function read(absolute: string, path: string): Promise<string> {

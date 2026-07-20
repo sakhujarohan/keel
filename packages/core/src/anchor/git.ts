@@ -162,6 +162,14 @@ function parseStatusPath(line: string): string {
   return path.replace(/^"(.*)"$/, "$1");
 }
 
+/** The git blob id of arbitrary bytes — the same value `git hash-object` would print for them. */
+export function blobId(bytes: Buffer | string): string {
+  const buffer = typeof bytes === "string" ? Buffer.from(bytes, "utf8") : bytes;
+  return createHash("sha1")
+    .update(Buffer.concat([Buffer.from(`blob ${buffer.length}\0`), buffer]))
+    .digest("hex");
+}
+
 /** The git object id of a file's contents, computed without spawning git. */
 async function nativeBlobId(absolutePath: string): Promise<string | null> {
   let bytes: Buffer;
@@ -178,9 +186,7 @@ async function nativeBlobId(absolutePath: string): Promise<string | null> {
     });
   }
 
-  return createHash("sha1")
-    .update(Buffer.concat([Buffer.from(`blob ${bytes.length}\0`), bytes]))
-    .digest("hex");
+  return blobId(bytes);
 }
 
 /** sha256 repositories are rare enough to be worth a subprocess rather than a second algorithm. */
