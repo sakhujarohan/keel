@@ -39,6 +39,8 @@ export interface CommitRecord {
   sha: string;
   subject: string;
   trailers: Record<string, string>;
+  /** Repo-relative paths the commit touched, so a rule can tell whether it concerns a run. */
+  files: string[];
 }
 
 export function createGitAnchor(repoRoot: string): GitAnchor {
@@ -112,22 +114,31 @@ export function createGitAnchor(repoRoot: string): GitAnchor {
     },
 
     async recentCommits(limit) {
-      // A record separator no commit message will contain, so parsing stays unambiguous.
+      // Records start with \x1e and separate fields with \x1f — neither appears in a commit
+      // message — so the file list can trail the last field without ambiguity.
       const { stdout, ok } = await git([
         "log",
         `-${limit}`,
         "--no-merges",
-        "--pretty=format:%H%x1f%s%x1f%(trailers:only=true,unfold=true)%x1e",
+        "--name-only",
+        "--pretty=format:%x1e%H%x1f%s%x1f%(trailers:only=true,unfold=true)%x1f",
       ]);
       if (!ok) return [];
 
       return stdout
         .split("\x1e")
-        .map((record) => record.trim())
-        .filter((record) => record.length > 0)
+        .filter((record) => record.trim().length > 0)
         .map((record) => {
-          const [sha = "", subject = "", trailerBlock = ""] = record.split("\x1f");
-          return { sha, subject, trailers: parseTrailers(trailerBlock) };
+          const [sha = "", subject = "", trailerBlock = "", fileBlock = ""] = record.split("\x1f");
+          return {
+            sha: sha.trim(),
+            subject: subject.trim(),
+            trailers: parseTrailers(trailerBlock),
+            files: fileBlock
+              .split("\n")
+              .map((file) => file.trim())
+              .filter((file) => file.length > 0),
+          };
         });
     },
   };

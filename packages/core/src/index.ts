@@ -15,6 +15,7 @@ export * from "./check/catalog.js";
 export * from "./check/context.js";
 export * from "./check/engine.js";
 export * from "./check/report.js";
+export * from "./check/require-gate.js";
 export * from "./gate/operations.js";
 export * from "./gate/refusal.js";
 export * from "./ledger/event.js";

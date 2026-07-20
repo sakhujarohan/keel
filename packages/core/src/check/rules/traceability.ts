@@ -251,8 +251,17 @@ export const kc13 = defineRule({
   evaluate(ctx) {
     if (ctx.commits.length === 0) return [];
 
+    // Only commits that touched a run's artifacts are in scope. A repository's unrelated history
+    // — everything predating Keel, and every commit elsewhere in the tree — is not this rule's
+    // business, and flagging it would teach people to ignore the warn channel.
+    const runDirs = ctx.model.runs.map((run) => `${run.dir}/`);
+    if (runDirs.length === 0) return [];
+
     const findings: Finding[] = [];
     for (const commit of ctx.commits) {
+      const touchesRun = commit.files.some((file) => runDirs.some((dir) => file.startsWith(dir)));
+      if (!touchesRun) continue;
+
       const trailers = Object.keys(commit.trailers);
       const attributed = trailers.some(
         (key) => key.startsWith("Agent-") || key.startsWith("Keel-") || key === "Human-Authored",

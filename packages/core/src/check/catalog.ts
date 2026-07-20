@@ -40,6 +40,7 @@ export interface CommitInfo {
   sha: string;
   subject: string;
   trailers: Record<string, string>;
+  files: string[];
 }
 
 export interface RuleContext {
