@@ -3,8 +3,8 @@
 ## Now
 <!-- DERIVED by keel status — do not hand-edit. Glyphs: ✓ sealed · ▶ reopened · ⚠ broken · — not reached. -->
 
-- **Phase:** 3 / 8 — Stack Selection
-- **Gates:** G1 ✓ (2026-07-20) · G2 ✓ (2026-07-20) · G3 ✓ (2026-07-20) · G4 ▶ · G5 ⚠ · G6 —
+- **Phase:** 4 / 8 — Low-Level Design
+- **Gates:** G1 ✓ (2026-07-20) · G2 ✓ (2026-07-20) · G3 ✓ (2026-07-20) · G4 ✓ (2026-07-20) · G5 ⚠ · G6 —
 - **Tasks:** 20 / 27 done
 - **Next action:** G5 no longer holds — restore the sealed content, or re-confirm and run: keel gate pass G5 --run keel-v2
 
