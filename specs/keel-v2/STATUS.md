@@ -3,13 +3,20 @@
 ## Now
 <!-- DERIVED by /status — do not hand-edit. Glyphs: ✓ signed-off · ▶ in progress · — not reached. -->
 
-- **Phase:** 7 / 8 — Build & Test ✓ (gate-ledger built and green)
-- **Gates:** G1 ✓ · G2 ✓ · G3 ✓ · G4 ✓ run-model, ✓ gate-ledger · G5 ✓ run-model, ✓ gate-ledger · G6 —
-- **Tasks:** run-model 8 / 8 · gate-ledger 6 / 6 — **134 tests green**
-- **Next action:** `/lld check-engine` (the third feature — it consumes both built ones), or `/review` for G6 on what exists
+- **Phase:** 7 / 8 — Build & Test ✓ (three features built; four designed but not started)
+- **Gates:** G1 ✓ · G2 ✓ · G3 ✓ · G4 ✓ run-model, gate-ledger, check-engine · G5 ✓ same three · G6 —
+- **Gates are now *sealed*, not just signed:** `.keel/gates.jsonl` holds 9 hash-anchored entries
+- **Tasks:** run-model 8/8 · gate-ledger 6/6 · check-engine 6/6 — **163 tests green**
+- **Next action:** `/lld state-projection` (then scaffold, adapters, upgrade), or `/review` for G6 on what exists
 
 ## Session log
 <!-- Append-only, newest on top. /handoff prepends one entry per work session. -->
+
+### 2026-07-21 — check-engine built, and Keel sealed its own gates
+- **Did:** Phase 4→7 for `check-engine`: all thirteen KC rules, the pure-rule architecture (context loaded once and deep-frozen), the narrow `requireGate` hook path, and A6 handling. Then pointed it at this repository. **Keel v2 now enforces this run.**
+- **Decisions / gotchas:** Two G5 interpretations recorded — KC-12 narrowed from "framework docs self-consistency" (unimplementable in a general repo) to **template drift**, and KC-09 adopts the three orphaned ledger diagnostics, discharging gate-ledger's carried-forward obligation. Dogfooding found **two bugs in my own rules**: KC-11 rejected mandate IDs (work legitimately traces to them), and `parseIdList` read `R8 (M1, M2)` as a token called `R8 (M1`, making delivered requirements look orphaned. Both fixed.
+- **The result worth remembering:** the first self-check reported 19 blocking findings, 11 of them KC-02 — *artifacts existing while their gates were unsealed*. Every gate in this run had been signed in conversation with nothing behind it, which is the exact failure v2 was built to prevent. Sealing them with the real `prepareSeal`/`commitSeal` took it to **4 blocking, 6 warnings** — and those remaining are all true: four features designed but not yet built, and six v1-era commits that predate D6.
+- **Next:** `state-projection` (`keel status`, the frontmatter projection), then `scaffold` (`init`, `run new`, `doctor`), `adapters`, `upgrade`. After that the `cli` package, which is also what finally allows the cold-start latency measurement that N3 still carries as UNKNOWN.
 
 ### 2026-07-20 — gate-ledger built: 6 tasks, 134 tests total, seals working end-to-end
 - **Did:** Phase 7 for `gate-ledger`. Keel can now actually seal a gate: `GitAnchor` (the only door to git), the append-only ledger, seal state with derived downstream invalidation, and `prepareSeal`/`commitSeal`/`reopenGate` with a refusal for every way the environment can fail. Verified end-to-end against real git repos — seal → break → heal → reopen → re-seal, with the ledger byte-checked to prove nothing was rewritten.
