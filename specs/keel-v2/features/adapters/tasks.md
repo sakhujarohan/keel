@@ -23,14 +23,14 @@ This feature tests the hook's mandate behaviour and adds the GitHub Action.
   with no `KEEL_*` env carries no trailer block at all; an unset value produces no line; a trailer
   already present is not duplicated.
 - **Files:** `packages/core/src/scaffold/hook.test.ts` · **Depends on:** — · **Satisfies:** R11, M5
-- `[ ]`
+- `[x]`
 
 ### T2 — the composite GitHub Action
 - **Goal:** `action.yml` running `npx @keel-dev/cli check --ci`, plus a README for it.
 - **Done when:** the action file is valid composite-action YAML pointing at the CLI; a doc explains
   wiring it as a required check.
 - **Files:** `packages/action/action.yml`, `packages/action/README.md` · **Depends on:** — · **Satisfies:** R12
-- `[ ]`
+- `[x]`
 
 ---
 

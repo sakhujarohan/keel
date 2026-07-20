@@ -3,13 +3,19 @@
 ## Now
 <!-- DERIVED by keel status — do not hand-edit. Glyphs: ✓ sealed · ▶ reopened · ⚠ broken · — not reached. -->
 
-- **Phase:** 7 / 8 — Build & Test
+- **Phase:** 5 / 8 — Spec-Compliance Review
 - **Gates:** G1 ✓ (2026-07-20) · G2 ✓ (2026-07-20) · G3 ✓ (2026-07-20) · G4 ✓ (2026-07-20) · G5 ✓ (2026-07-20) · G6 —
-- **Tasks:** 20 / 31 done
-- **Next action:** Continue building: 11 of 31 tasks remain.
+- **Tasks:** 31 / 31 done
+- **Next action:** Produce and confirm the artifact for G6, then run: keel gate pass G6 --run keel-v2
 
 ## Session log
 <!-- Append-only, newest on top. /handoff prepends one entry per work session. -->
+
+### 2026-07-21 — all seven features built; Keel enforces itself; at G6
+- **Did:** Built the remaining four features — state-projection, scaffold + the `@keel-dev/cli` binary, adapters, upgrade — plus a red-flag pass (a genuinely fast `requireGateFast` hook path, KC-13 path-scoping). 219 tests. **Keel v2 now passes its own `keel check` at 0 blocking findings**, sealing its own gates with its own tooling.
+- **Decisions / gotchas:** The deepest bug of the whole build, found only by driving the real CLI end-to-end: **sealing wrote `status: signed-off` into the artifact, which broke the seal it had just made** (ADR 0002 verifies the working tree; A5 writes frontmatter). Fixed by hashing the *post-sign* content — a seal and its projection are now a pair sharing one transform (`model/frontmatter-state.ts`), recorded as gate-ledger amendment 2. The commit hook aborted commits when a trailer value was empty (missing `exit 0`) — caught by the hook test. **N3 resolved:** bundled hook path cold-starts ~55 ms, 9× under the 500 ms budget; the ~750 ms `tsx` figure was on-the-fly compilation, not the shipped path — ADR 0001's escape hatch not needed.
+- **Verified:** `examples/ticket-booking` migrates with `keel upgrade` — 12 artifacts to v2, 9 legacy gates, zero manual edits, no seal break (R13's acceptance test, on the real example).
+- **Next:** **G6 — Ship review.** The review checklist (`review-checklist.md`) is complete and holds the ledgers, the measured N3, and a 10-item v2.0.x patch list. Awaiting the human's ship confirmation; then `keel gate pass G6`. First v2.0.0 (non-alpha) task: wire `tsup` and `npm publish`.
 
 ### 2026-07-21 — check-engine built, and Keel sealed its own gates
 - **Did:** Phase 4→7 for `check-engine`: all thirteen KC rules, the pure-rule architecture (context loaded once and deep-frozen), the narrow `requireGate` hook path, and A6 handling. Then pointed it at this repository. **Keel v2 now enforces this run.**

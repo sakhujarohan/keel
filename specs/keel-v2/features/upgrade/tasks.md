@@ -23,7 +23,7 @@ Two tasks: the migrator, then the concrete acceptance test against a real v1 run
   appended with the right gate and `legacy: true`; a dirty tree is refused; re-running is a no-op;
   an artifact with no frontmatter is skipped, not errored.
 - **Files:** `packages/core/src/migrate/upgrade.ts`, `packages/core/src/migrate/upgrade.test.ts` · **Depends on:** — · **Satisfies:** R13, M8
-- `[ ]`
+- `[x]`
 
 ## Wave 2 — depends on T1
 
@@ -33,7 +33,7 @@ Two tasks: the migrator, then the concrete acceptance test against a real v1 run
 - **Done when:** after `upgrade`, every ticket-booking artifact reads `schema_version: 2`, the ledger
   holds a legacy entry per signed-off artifact, and `keel check` reports no KC-09 seal break.
 - **Files:** `packages/core/src/migrate/ticket-booking.test.ts` · **Depends on:** T1 · **Satisfies:** R13
-- `[ ]`
+- `[x]`
 
 ---
 

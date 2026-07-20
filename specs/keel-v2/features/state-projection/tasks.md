@@ -23,7 +23,7 @@ left to get wrong.
 - **Done when:** a run with G1–G3 sealed reads as phase 3 with `✓ ✓ ✓ — — —`; a broken seal shows ⚠
   and makes the next action "re-confirm"; an empty ledger reads as phase 0; no clock is consulted.
 - **Files:** `packages/core/src/project/state.ts`, `packages/core/src/project/state.test.ts` · **Depends on:** — · **Satisfies:** R9
-- `[ ]`
+- `[x]`
 
 ## Wave 2 — depends on T1
 
@@ -32,7 +32,7 @@ left to get wrong.
 - **Done when:** rendering is deterministic (same state → identical bytes) and the output round-trips
   through the run-model's `splitStatus` without producing a diagnostic.
 - **Files:** `packages/core/src/project/render.ts`, `packages/core/src/project/render.test.ts` · **Depends on:** T1 · **Satisfies:** R9
-- `[ ]`
+- `[x]`
 
 ## Wave 3 — depends on T2
 
@@ -44,7 +44,7 @@ left to get wrong.
   carries comments and extra keys keeps all of them, with only `status`/`updated` changed; re-running
   reports `changed: false` and performs no write.
 - **Files:** `packages/core/src/project/write.ts`, `packages/core/src/project/write.test.ts` · **Depends on:** T2 · **Satisfies:** R9, R5, R8, M6/A5
-- `[ ]`
+- `[x]`
 
 ---
 

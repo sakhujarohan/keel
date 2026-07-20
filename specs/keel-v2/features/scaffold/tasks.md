@@ -25,7 +25,7 @@ command, and an end-to-end drive of the real binary.
   keys, and leaves invalid JSON untouched; `createRun` rejects a non-kebab name and refuses an
   existing run.
 - **Files:** `packages/core/src/scaffold/init.ts`, `packages/core/src/scaffold/init.test.ts` · **Depends on:** — · **Satisfies:** R1, R2
-- `[ ]`
+- `[x]`
 
 ### T2 — doctor
 - **Goal:** `diagnose` — read-only probes of git, identity, commits, tree, manifest, ledger and hook
@@ -33,7 +33,7 @@ command, and an end-to-end drive of the real binary.
 - **Done when:** a bare temp dir reports "not a git repository" and "not a keel repository"; a fully
   set-up repo reports all clear; a repo with a mangled ledger line flags the ledger probe.
 - **Files:** `packages/core/src/scaffold/doctor.ts`, `packages/core/src/scaffold/doctor.test.ts` · **Depends on:** — · **Satisfies:** R14, N6
-- `[ ]`
+- `[x]`
 
 ## Wave 2 — depends on T1, T2
 
@@ -43,7 +43,7 @@ command, and an end-to-end drive of the real binary.
 - **Done when:** the package typechecks and builds; `renderReport` emits `::error` annotations under
   `--ci` and a single next action under `--format agent`; unit tests cover the format functions.
 - **Files:** `packages/cli/**`, `packages/cli/src/format.test.ts` · **Depends on:** T1, T2 · **Satisfies:** R3–R9, R14, M3
-- `[ ]`
+- `[x]`
 
 ## Wave 3 — depends on T3
 
@@ -53,7 +53,7 @@ command, and an end-to-end drive of the real binary.
   editing the sealed file makes `keel check` exit 1 → `keel status` re-projects the ⚠ → `keel doctor`
   reports the wiring. All asserted on real process exit codes and file contents.
 - **Files:** `packages/cli/test/cli.e2e.test.ts` · **Depends on:** T3 · **Satisfies:** R1–R9, R14
-- `[ ]`
+- `[x]`
 
 ---
 
