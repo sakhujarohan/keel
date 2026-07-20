@@ -51,9 +51,13 @@ export async function loadRunModel(repoRoot: string, opts: LoadOptions = {}): Pr
     if (run) runs.push(run);
   }
 
+  // Written by init/upgrade; its absence simply means no templates are installed here.
+  const templatesRaw = await readMaybe(join(repoRoot, "templates", "VERSION"));
+
   return deepFreeze({
     root: repoRoot,
     manifest,
+    templatesVersion: templatesRaw?.trim() || null,
     runs: runs.sort(byName),
     diagnostics: diagnostics.sort(byLocation),
   });

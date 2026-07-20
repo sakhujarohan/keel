@@ -11,6 +11,10 @@
 export const SCHEMA_VERSION = 2 as const;
 
 export * from "./anchor/git.js";
+export * from "./check/catalog.js";
+export * from "./check/context.js";
+export * from "./check/engine.js";
+export * from "./check/report.js";
 export * from "./gate/operations.js";
 export * from "./gate/refusal.js";
 export * from "./ledger/event.js";

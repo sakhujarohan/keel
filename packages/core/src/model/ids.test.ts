@@ -67,3 +67,22 @@ describe("parseIdList", () => {
     expect(parseIdList("R1, banana")).toEqual(["R1", "banana"]);
   });
 });
+
+describe("parseIdList — parenthetical groups", () => {
+  it("reads IDs out of a parenthetical aside", () => {
+    expect(parseIdList("R5, R6, R7, R8 (M1, M2, M7, M9)")).toEqual([
+      "R5",
+      "R6",
+      "R7",
+      "R8",
+      "M1",
+      "M2",
+      "M7",
+      "M9",
+    ]);
+  });
+
+  it("splits on semicolons too", () => {
+    expect(parseIdList("R3; R4")).toEqual(["R3", "R4"]);
+  });
+});

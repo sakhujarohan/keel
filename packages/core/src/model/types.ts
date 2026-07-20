@@ -200,6 +200,8 @@ export interface RepoModel {
   readonly root: string;
   /** `null` when `keel.yaml` is absent — the "not a keel repo" case. */
   readonly manifest: Manifest | null;
+  /** Version marker of the installed `templates/`, or null when none are installed. */
+  readonly templatesVersion: string | null;
   readonly runs: readonly RunEntry[];
   readonly diagnostics: readonly Diagnostic[];
 }

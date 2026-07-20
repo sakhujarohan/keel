@@ -1,0 +1,4 @@
+schema: 2
+templates_version: 1.4.0
+specs_dir: specs
+telemetry: off

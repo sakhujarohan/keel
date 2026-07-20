@@ -31,6 +31,14 @@ export interface GitAnchor {
   treeStatus(): Promise<TreeStatus>;
   /** Blob id per repo-relative path; null where the file does not exist. */
   hashObjects(paths: string[]): Promise<Map<string, string | null>>;
+  /** Recent commits with their parsed trailers — read only when a rule needs attribution. */
+  recentCommits(limit: number): Promise<CommitRecord[]>;
+}
+
+export interface CommitRecord {
+  sha: string;
+  subject: string;
+  trailers: Record<string, string>;
 }
 
 export function createGitAnchor(repoRoot: string): GitAnchor {
@@ -102,7 +110,37 @@ export function createGitAnchor(repoRoot: string): GitAnchor {
       }
       return result;
     },
+
+    async recentCommits(limit) {
+      // A record separator no commit message will contain, so parsing stays unambiguous.
+      const { stdout, ok } = await git([
+        "log",
+        `-${limit}`,
+        "--no-merges",
+        "--pretty=format:%H%x1f%s%x1f%(trailers:only=true,unfold=true)%x1e",
+      ]);
+      if (!ok) return [];
+
+      return stdout
+        .split("\x1e")
+        .map((record) => record.trim())
+        .filter((record) => record.length > 0)
+        .map((record) => {
+          const [sha = "", subject = "", trailerBlock = ""] = record.split("\x1f");
+          return { sha, subject, trailers: parseTrailers(trailerBlock) };
+        });
+    },
   };
+}
+
+function parseTrailers(block: string): Record<string, string> {
+  const trailers: Record<string, string> = {};
+  for (const line of block.split("\n")) {
+    const separator = line.indexOf(":");
+    if (separator <= 0) continue;
+    trailers[line.slice(0, separator).trim()] = line.slice(separator + 1).trim();
+  }
+  return trailers;
 }
 
 /** `XY path` — and for a rename, `R  old -> new`, where the new path is the interesting one. */

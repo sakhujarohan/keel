@@ -44,8 +44,10 @@ export function parseIdList(cell: string): string[] {
   const trimmed = cell.trim();
   if (EMPTY_CELL_TOKENS.has(trimmed.toLowerCase())) return [];
 
+  // Parentheses and semicolons separate too: "R5, R6 (M1, M2)" names four IDs, not three plus a
+  // token called "R6 (M1".
   return trimmed
-    .split(/[,·]/)
+    .split(/[,·;()]/)
     .map((part) => part.replace(/[`*_]/g, "").trim())
     .filter((part) => part.length > 0 && !EMPTY_CELL_TOKENS.has(part.toLowerCase()));
 }
