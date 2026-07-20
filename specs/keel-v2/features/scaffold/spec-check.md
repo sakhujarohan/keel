@@ -2,7 +2,7 @@
 artifact: spec-check
 phase: 5
 gate: G5
-status: reopened
+status: signed-off
 updated: 2026-07-20
 ---
 
