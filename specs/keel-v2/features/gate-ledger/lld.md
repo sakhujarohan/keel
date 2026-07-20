@@ -2,7 +2,7 @@
 artifact: lld
 phase: 4
 gate: G4
-status: signed-off
+status: reopened
 updated: 2026-07-20
 ---
 

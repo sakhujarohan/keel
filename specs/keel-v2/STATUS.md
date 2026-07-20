@@ -1,13 +1,12 @@
 # Run Status — keel-v2
 
 ## Now
-<!-- DERIVED by /status — do not hand-edit. Glyphs: ✓ signed-off · ▶ in progress · — not reached. -->
+<!-- DERIVED by keel status — do not hand-edit. Glyphs: ✓ sealed · ▶ reopened · ⚠ broken · — not reached. -->
 
-- **Phase:** 7 / 8 — Build & Test ✓ (three features built; four designed but not started)
-- **Gates:** G1 ✓ · G2 ✓ · G3 ✓ · G4 ✓ run-model, gate-ledger, check-engine · G5 ✓ same three · G6 —
-- **Gates are now *sealed*, not just signed:** `.keel/gates.jsonl` holds 9 hash-anchored entries
-- **Tasks:** run-model 8/8 · gate-ledger 6/6 · check-engine 6/6 — **163 tests green**
-- **Next action:** `/lld state-projection` (then scaffold, adapters, upgrade), or `/review` for G6 on what exists
+- **Phase:** 3 / 8 — Stack Selection
+- **Gates:** G1 ✓ (2026-07-20) · G2 ✓ (2026-07-20) · G3 ✓ (2026-07-20) · G4 ⚠ · G5 ⚠ · G6 —
+- **Tasks:** 20 / 27 done
+- **Next action:** G4 no longer holds — restore the sealed content, or re-confirm and run: keel gate pass G4 --run keel-v2
 
 ## Session log
 <!-- Append-only, newest on top. /handoff prepends one entry per work session. -->
