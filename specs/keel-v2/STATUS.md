@@ -4,9 +4,9 @@
 <!-- DERIVED by keel status — do not hand-edit. Glyphs: ✓ sealed · ▶ reopened · ⚠ broken · — not reached. -->
 
 - **Phase:** 4 / 8 — Low-Level Design
-- **Gates:** G1 ✓ (2026-07-20) · G2 ✓ (2026-07-20) · G3 ✓ (2026-07-20) · G4 ✓ (2026-07-20) · G5 ⚠ · G6 —
+- **Gates:** G1 ✓ (2026-07-20) · G2 ✓ (2026-07-20) · G3 ✓ (2026-07-20) · G4 ✓ (2026-07-20) · G5 ▶ · G6 —
 - **Tasks:** 20 / 27 done
-- **Next action:** G5 no longer holds — restore the sealed content, or re-confirm and run: keel gate pass G5 --run keel-v2
+- **Next action:** G5 is reopened — re-confirm it, then run: keel gate pass G5 --run keel-v2
 
 ## Session log
 <!-- Append-only, newest on top. /handoff prepends one entry per work session. -->
