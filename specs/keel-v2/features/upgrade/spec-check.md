@@ -3,7 +3,7 @@ artifact: spec-check
 phase: 5
 gate: G5
 status: signed-off
-updated: 2026-07-21
+updated: 2026-07-20
 ---
 
 # Spec-Compliance Review — upgrade
