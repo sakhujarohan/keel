@@ -3,7 +3,7 @@ artifact: lld
 phase: 4
 gate: G4
 status: signed-off
-updated: 2026-07-21
+updated: 2026-07-20
 ---
 
 # LLD — adapters
