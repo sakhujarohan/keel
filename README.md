@@ -1,12 +1,23 @@
 # Keel
 
-**A deterministic, gated workflow for building software with AI agents — from problem statement to shipped, reviewed code.**
+**A mechanically-gated workflow for building software with AI agents — from problem statement to shipped, reviewed code.**
 
-_v1.0.0 · MIT-licensed · works with any AI coding agent — Claude Code, Codex, Cursor, Gemini, and more._
+_v1 methodology · v2 enforcement layer (alpha) · MIT-licensed · works with any AI coding agent — Claude Code, Codex, Cursor, Gemini, and more._
 
-Keel is a project seed. Copy it (or start a run inside it), and you get a repeatable lifecycle that takes you through requirements, high-level design, stack selection, low-level design, task breakdown, build/test, and review — with a human sign-off gate at every transition. It is stack-agnostic: the language and framework are chosen *during* a run, as a deliberate step, never assumed.
+Keel is a repeatable lifecycle that takes you through requirements, high-level design, stack selection, low-level design, task breakdown, build/test, and review — with a human sign-off gate at every transition. It is stack-agnostic: the language and framework are chosen *during* a run, as a deliberate step, never assumed.
 
 It exists to make AI-assisted development **produce the same quality every time** — whether you have a week or an afternoon.
+
+> **Two layers.** The **v1 methodology** is the prompts, templates, and slash commands in this repo — copy the folder and run it with any agent. The **v2 enforcement layer** (`packages/`, alpha) is a TypeScript `keel` CLI that makes the gates *mechanical* rather than prompt-enforced: a hash-anchored ledger records every sign-off, `keel check` blocks a design that ran ahead of its gate, and a broken seal cannot merge. v2 was itself built under Keel — `specs/keel-v2/` is the run, and Keel now passes its own check at zero blocking findings.
+>
+> ```
+> npx @keel-dev/cli init      # scaffold a repo (never overwrites)
+> keel run new <name>         # start a run
+> keel check                  # verify the whole repo against the rule catalog
+> keel gate pass G1 --run …   # seal a gate: prints what it's signing, then records it
+> keel status                 # regenerate the derived status from the ledger
+> keel upgrade                # migrate a v1 repo to the v2 ledger
+> ```
 
 ---
 
