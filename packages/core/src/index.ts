@@ -21,6 +21,7 @@ export * from "./gate/refusal.js";
 export * from "./ledger/event.js";
 export * from "./ledger/ledger.js";
 export * from "./ledger/seal.js";
+export * from "./migrate/upgrade.js";
 export * from "./model/frontmatter-state.js";
 export * from "./model/index.js";
 export * from "./project/render.js";

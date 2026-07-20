@@ -239,6 +239,10 @@ if [ -n "$KEEL_AGENT_MODEL$KEEL_AGENT_SESSION$KEEL_AGENT_TOOL$KEEL_RUN$KEEL_TASK
   append "Agent-Model" "$KEEL_AGENT_MODEL"
   append "Agent-Session" "$KEEL_AGENT_SESSION"
 fi
+
+# A hook that exits non-zero aborts the commit. The last append above returns non-zero whenever
+# its value was empty, so end deliberately clean — never block a commit over a missing trailer.
+exit 0
 `;
 }
 

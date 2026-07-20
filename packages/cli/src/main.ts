@@ -27,6 +27,7 @@ import {
   requireGateFast,
   runChecks,
   setArtifactState,
+  upgrade,
   writeStatus,
 } from "@keel-dev/core";
 import { Command } from "commander";
@@ -240,6 +241,25 @@ program
       }
 
       if (model.runs.length === 0) say("no runs found under specs/");
+      return EXIT_OK;
+    }),
+  );
+
+program
+  .command("upgrade")
+  .description("migrate a v1 repository to schema v2 (refuses on a dirty tree)")
+  .action(
+    run(async () => {
+      const repoRoot = process.cwd();
+      const result = await upgrade({ repoRoot, anchor: createGitAnchor(repoRoot) });
+
+      if (result.manifestWritten) say("  ✓ keel.yaml written");
+      say(`  ✓ ${result.artifactsMigrated.length} artifact(s) migrated to schema 2`);
+      say(
+        `  ✓ ${result.ledgerBackfilled} gate(s) backfilled (legacy: true — recorded, not verified)`,
+      );
+      for (const skipped of result.skipped) say(`  ○ ${skipped}`);
+      say("\nre-running is a no-op. next: keel check");
       return EXIT_OK;
     }),
   );

@@ -1,0 +1,15 @@
+name: keel-check
+description: Fail a pull request whose Keel gates are not satisfied.
+branding:
+  icon: anchor
+  color: blue
+
+runs:
+  using: composite
+  steps:
+    # `check --ci` emits ::error file=…,line=… annotations on the offending artifact lines and
+    # exits 1 on any block-severity finding, which fails this step. The action holds no logic of
+    # its own — everything it could get wrong is tested in the CLI.
+    - name: keel check
+      shell: bash
+      run: npx --yes @keel-dev/cli check --ci
