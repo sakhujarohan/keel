@@ -1,0 +1,70 @@
+{
+  "diagnostics": [
+    "frontmatter-missing @ specs/demo/hld.md:1",
+    "frontmatter-invalid @ specs/demo/requirements.md:1",
+    "frontmatter-invalid @ specs/demo/requirements.md:1",
+    "frontmatter-invalid @ specs/demo/requirements.md:1",
+    "frontmatter-invalid @ specs/demo/requirements.md:1",
+  ],
+  "manifest": {
+    "schema": 2,
+    "specsDir": "specs",
+    "telemetry": "off",
+    "templatesVersion": "2.0.0",
+  },
+  "runs": [
+    {
+      "artifacts": {
+        "context": undefined,
+        "conventions": undefined,
+        "hld": {
+          "artifact": "hld",
+          "gate": "—",
+          "phase": 0,
+          "schemaVersion": 1,
+          "status": "draft",
+          "updated": "",
+        },
+        "requirements": {
+          "artifact": "requirements",
+          "gate": "—",
+          "phase": 99,
+          "schemaVersion": 1,
+          "status": "draft",
+          "updated": "20th of July",
+        },
+        "review": undefined,
+        "stack": undefined,
+      },
+      "assumptions": [
+        "A1: proposed",
+      ],
+      "dir": "specs/demo",
+      "featureList": [
+        "widget → R1",
+      ],
+      "features": [
+        {
+          "declaredInHld": true,
+          "has": {
+            "lld": false,
+            "specCheck": false,
+            "tasks": false,
+          },
+          "name": "widget",
+          "tasks": [],
+        },
+      ],
+      "hasStatusSplit": false,
+      "mandates": [],
+      "mandatesExplicitNone": true,
+      "name": "demo",
+      "nfrs": [
+        "N1: Determinism — stable output",
+      ],
+      "requirements": [
+        "R1: The system shall answer.",
+      ],
+    },
+  ],
+}

@@ -1,0 +1,64 @@
+{
+  "diagnostics": [
+    "row-malformed @ specs/demo/features/widget/tasks.md:12",
+    "id-duplicate @ specs/demo/features/widget/tasks.md:19",
+    "id-duplicate @ specs/demo/requirements.md:17",
+    "id-malformed @ specs/demo/requirements.md:18",
+  ],
+  "manifest": {
+    "schema": 2,
+    "specsDir": "specs",
+    "telemetry": "off",
+    "templatesVersion": "2.0.0",
+  },
+  "runs": [
+    {
+      "artifacts": {
+        "context": undefined,
+        "conventions": undefined,
+        "hld": undefined,
+        "requirements": {
+          "artifact": "requirements",
+          "gate": "G1",
+          "phase": 1,
+          "schemaVersion": 2,
+          "status": "draft",
+          "updated": "2026-07-20",
+        },
+        "review": undefined,
+        "stack": undefined,
+      },
+      "assumptions": [
+        "A1: confirmed",
+      ],
+      "dir": "specs/demo",
+      "featureList": [],
+      "features": [
+        {
+          "declaredInHld": false,
+          "has": {
+            "lld": false,
+            "specCheck": false,
+            "tasks": true,
+          },
+          "name": "widget",
+          "tasks": [
+            "T1 w0 todo deps=[] files=[src/a.ts] serves=[R1]",
+          ],
+        },
+      ],
+      "hasStatusSplit": false,
+      "mandates": [
+        "M1: MUST be append-only",
+      ],
+      "mandatesExplicitNone": false,
+      "name": "demo",
+      "nfrs": [
+        "N1: Determinism — stable output",
+      ],
+      "requirements": [
+        "R1: first claim",
+      ],
+    },
+  ],
+}
