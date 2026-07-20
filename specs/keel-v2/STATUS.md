@@ -1,0 +1,41 @@
+# Run Status — keel-v2
+
+## Now
+<!-- DERIVED by /status — do not hand-edit. Glyphs: ✓ signed-off · ▶ in progress · — not reached. -->
+
+- **Phase:** 7 / 8 — Build & Test ✓ (gate-ledger built and green)
+- **Gates:** G1 ✓ · G2 ✓ · G3 ✓ · G4 ✓ run-model, ✓ gate-ledger · G5 ✓ run-model, ✓ gate-ledger · G6 —
+- **Tasks:** run-model 8 / 8 · gate-ledger 6 / 6 — **134 tests green**
+- **Next action:** `/lld check-engine` (the third feature — it consumes both built ones), or `/review` for G6 on what exists
+
+## Session log
+<!-- Append-only, newest on top. /handoff prepends one entry per work session. -->
+
+### 2026-07-20 — gate-ledger built: 6 tasks, 134 tests total, seals working end-to-end
+- **Did:** Phase 7 for `gate-ledger`. Keel can now actually seal a gate: `GitAnchor` (the only door to git), the append-only ledger, seal state with derived downstream invalidation, and `prepareSeal`/`commitSeal`/`reopenGate` with a refusal for every way the environment can fail. Verified end-to-end against real git repos — seal → break → heal → reopen → re-seal, with the ledger byte-checked to prove nothing was rewritten.
+- **Decisions / gotchas:** **LLD amendment 1, found by a test:** sealing writes `.keel/`, which dirties the tree, so the *second* gate of any session was always refused — the first seal poisoned the next. The dirty check now exempts Keel's own directory (git reports it as `.keel/` while untracked, so the test is by prefix). The M1 mandate test passes: native blob ids equal `git hash-object` across empty/unicode/CRLF/binary/200 KB inputs — that test is what holds us to the mandate now that we don't spawn git. Two test-harness traps worth remembering: `git config --unset user.email` falls through to the developer's *global* config (set it empty instead), and per-feature gate fixtures must include G3 or `blockedBy` correctly reports it.
+- **Next:** `check-engine` — it consumes both built features and must map the three orphaned ledger diagnostic codes to KC rules (carried from gate-ledger's G5).
+
+### 2026-07-20 — gate-ledger designed through G5; 6 tasks ready to build
+- **Did:** `/lld`, `/spec-check` and `/tasks` for **gate-ledger**. G4 and G5 both signed. The spec-check diffed M1 into six separate clauses (18 in total) rather than one row — worth it: it surfaced three items.
+- **Decisions / gotchas:** (1) **M1's "computed as `git hash-object`" reads as the *value*, not the mechanism** — hashes are computed natively (verified identical to git; the equality test is now a mandate-compliance test, so a failure means M1 is violated) to keep a subprocess off the hook path. (2) **`commit: ""` refused** — sealing in a repo with no commits is now `GateRefusal{no-commit}`; M1 permitted the empty string, but a seal pointing at no commit can't be found in history later. G4 amended and re-confirmed. (3) Three new diagnostic codes (`ledger-line-malformed`, `ledger-entry-invalid`, `ledger-unknown-run`) have **no KC rule mapping yet** — carried forward as a required input to check-engine's G4, or they ship as dead weight.
+- **Next:** build gate-ledger — T1 event schema + T2 GitAnchor (parallel), then ledger → seal state → operations → end-to-end on a real git repo.
+
+### 2026-07-20 — run-model built: 8 tasks, 76 tests, three LLD amendments
+- **Did:** Phase 7 for `run-model`, all waves. `@keel-dev/core` now loads a repo into a typed, frozen `RepoModel`: manifest, runs, artifacts + frontmatter, requirement/NFR/mandate/assumption rows, HLD feature list, tasks-with-waves, and line-numbered diagnostics. Stack is real: TypeScript 7.0 / vitest 4.1 / Biome 2.5 / zod 4.4 on Node 25.3 (versions verified against the registry — the ones I first wrote from memory did not exist).
+- **Decisions / gotchas:** Three LLD amendments, all forced by the locked constraint "v1 templates are the parsing contract" — (1) tasks are headings + bullets, not a table, and `Section` needed `bullets`/`text`; (2) `status: set` is a real v1 value; (3) **`stack.md` (G3), `review-checklist.md` (G6) and `conventions.md` were missing from the recognised artifact set — the model was blind to two of the six gates.** G4 and G5 both re-confirmed. Bugs caught by tests: a frontmatter block parses as a *setext heading* (phantom section); feature names split at internal hyphens (`gate-ledger` → `gate`). Latency measured honestly (fixture 28 ms, this repo 232 ms, budget 300 ms) — the cold-process hook-path number stays **UNKNOWN** until the bundled `cli` package exists, carried as an open risk for G6.
+- **Verified:** the loader reads this repo's own `specs/keel-v2` with **0 diagnostics** — 14 requirements, 9 mandates, 7 assumptions all confirmed, 7 features, 8 tasks with correct waves and dependencies.
+- **Next:** `/lld gate-ledger`. Note for the check engine: `tasks.md` "Satisfies" cells here contain prose ("foundation for R3, R4"), which KC-11 will rightly flag as dangling IDs — a content fix for later, not a parser bug.
+
+### 2026-07-19 — G3 locked; LLD begins with run-model
+- **Did:** Stack locked by Rohan (TS/Node ≥ 20 ESM · npm workspaces · @keel-dev/* scoped, bin `keel` · commander/tsup/zod/remark/vitest/Biome · internal child_process git wrapper · composite Action). Started Phase 4 with the `run-model` feature (foundation — typed RunModel everything else consumes). Side note: a product-flows artifact (UX walkthrough, 10 scenarios) was published on 2026-07-13 for pitching — communication doc only, no gate impact.
+- **Decisions / gotchas:** LLD order per HLD feature list: run-model → gate-ledger → check-engine → state-projection → scaffold → adapters → upgrade. G4 is per-feature.
+- **Next:** Draft `features/run-model/lld.md`, hold at G4.
+
+### 2026-07-13 — Kickoff → G1 → G2 in one session
+- **Did (later same session):** Phase 2 HLD — three critical design questions decided (ledger is sole gate truth; seals verify against the working tree with invalidation derived at read time; rules are code-with-metadata with one severity table). C4 L1–L3 + 2 sequence flows + conceptual data model as D2 SVGs in `diagrams/`. Feature list: run-model, gate-ledger, check-engine, state-projection, scaffold, adapters, upgrade. **G2 signed by Rohan.** Next: `/stack` (G3 confirms tooling details + resolves the npm-name UNKNOWN; language is a locked constraint).
+
+### 2026-07-13 — Kickoff + requirements locked (G1)
+- **Did:** Phase 0 kickoff (greenfield · standard path · profile `standard` + testing→production override · renderer d2/installed). Phase 1: wrote `requirements.md` — R1–R14, N1–N7, Literal Mandates M1–M9, assumptions A1–A7 all confirmed. Clarify loop resolved four design-changing questions (scope = alpha+v2.0; docs site out; non-keel repo → exit 0 + notice with `--strict`; M6 state-field exception granted). **G1 signed by Rohan.**
+- **Decisions / gotchas:** Upstream plan of record (D1–D6): https://claude.ai/code/artifact/edafc8be-c3a1-4cb8-a355-e84d99ada5db. Stack is a pre-decided constraint (TS/Node ≥ 20) — G3 confirms details only. One open `UNKNOWN`: npm name availability, resolved at G3 per A3.
+- **Next:** `/hld` — high-level design for the CLI (components, critical design questions, D2 diagrams into `specs/keel-v2/diagrams/`).
