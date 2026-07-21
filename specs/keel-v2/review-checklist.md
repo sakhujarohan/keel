@@ -140,4 +140,4 @@ Each: what it is · why deferred · what would trigger the fix.
 - [x] Performance targets reconciled (N3 measured, budget met)
 - [x] Known limitations documented, not hidden (the v2.0.x list above)
 - [x] Keel's own check passes this repository at 0 blocking findings
-- [ ] **Human has confirmed: ready to ship v2.0.0-alpha**
+- [x] **Human has confirmed: ready to ship v2.0.0-alpha** — Rohan, 2026-07-21
