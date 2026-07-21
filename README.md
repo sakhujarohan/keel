@@ -2,73 +2,179 @@
 
 **A mechanically-gated workflow for building software with AI agents — from problem statement to shipped, reviewed code.**
 
-_v1 methodology · v2 enforcement layer (alpha) · MIT-licensed · works with any AI coding agent — Claude Code, Codex, Cursor, Gemini, and more._
+`status: v2.0.0-alpha` · `license: MIT` · not yet on npm — run from source (below)
 
-Keel is a repeatable lifecycle that takes you through requirements, high-level design, stack selection, low-level design, task breakdown, build/test, and review — with a human sign-off gate at every transition. It is stack-agnostic: the language and framework are chosen *during* a run, as a deliberate step, never assumed.
-
-It exists to make AI-assisted development **produce the same quality every time** — whether you have a week or an afternoon.
-
-> **Two layers.** The **v1 methodology** is the prompts, templates, and slash commands in this repo — copy the folder and run it with any agent. The **v2 enforcement layer** (`packages/`, alpha) is a TypeScript `keel` CLI that makes the gates *mechanical* rather than prompt-enforced: a hash-anchored ledger records every sign-off, `keel check` blocks a design that ran ahead of its gate, and a broken seal cannot merge. v2 was itself built under Keel — `specs/keel-v2/` is the run, and Keel now passes its own check at zero blocking findings.
->
-> ```
-> npx @keel-dev/cli init      # scaffold a repo (never overwrites)
-> keel run new <name>         # start a run
-> keel check                  # verify the whole repo against the rule catalog
-> keel gate pass G1 --run …   # seal a gate: prints what it's signing, then records it
-> keel status                 # regenerate the derived status from the ledger
-> keel upgrade                # migrate a v1 repo to the v2 ledger
-> ```
+Keel is a repeatable lifecycle — requirements → high-level design → stack selection → low-level design → task breakdown → build/test → review — with a human sign-off gate at every transition. **v1** is the methodology: prompts, templates, and slash commands any agent can follow. **v2** (this repo, `packages/`) makes the gates *mechanical*: a hash-anchored ledger records every sign-off, and `keel check` blocks a design that ran ahead of its gate or a seal that's been tampered with. v2 was built entirely under Keel's own process — [`specs/keel-v2/`](specs/keel-v2/) is the run, and Keel now passes its own check at zero blocking findings.
 
 ---
+
+## 60-second quick start
+
+```sh
+git clone https://github.com/sakhujarohan/keel.git
+cd keel && npm install
+```
+
+The CLI isn't published yet (see [Status](#status--roadmap)), so run it straight from the clone.
+This one-liner makes `keel` behave like an installed command for the rest of your shell session:
+
+```sh
+alias keel="npx tsx $(pwd)/packages/cli/src/main.ts"
+```
+
+Point it at any git repo — this one or a project of your own:
+
+```sh
+cd ~/some-project        # or stay right here to try it on this repo
+keel init                 # scaffold keel.yaml, templates, hooks — never overwrites
+keel run new checkout     # start a run under specs/checkout/
+# … write specs/checkout/requirements.md, commit it …
+keel gate pass G1 --run checkout --artifact specs/checkout/requirements.md
+keel check                # verify the whole repo against the rule catalog
+```
+
+**Using an agent instead of the raw CLI?** Open this repo in Claude Code and run `/kickoff` — the
+slash commands drive the same lifecycle, and `keel init` has already wired a hook that blocks a
+phase skill from running ahead of its gate. Any other agent (Codex, Cursor, Aider, Gemini): open
+[`AGENTS.md`](AGENTS.md) and follow [`workflow/lifecycle.md`](workflow/lifecycle.md) — it has no
+Claude-specific logic.
+
+## Seeing it work
+
+Real, unedited output from the sequence above, run against a fresh repo:
+
+```
+$ keel init
+  ✓ keel.yaml
+  ✓ templates/…            (12 files)
+  ✓ .claude/settings.json
+  ✓ .git/hooks/prepare-commit-msg
+
+next: keel run new <name>
+
+$ keel run new checkout
+  ✓ specs/checkout/context.md
+  ✓ specs/checkout/STATUS.md
+
+$ keel gate pass G1 --run checkout --artifact specs/checkout/requirements.md --yes
+sealing:
+  run       checkout
+  gate      G1
+  artifact  specs/checkout/requirements.md
+  hash      0412277efdb6
+  actor     Ada Lovelace <ada@example.com>
+  commit    2278e02
+
+G1 sealed ✓
+```
+
+Now someone edits the sealed file without re-confirming it:
+
+```
+$ keel check --run checkout --format agent
+WARN KC-10 specs/checkout/STATUS.md: The Now block shows G1 as signed off, but no seal
+     in the ledger backs it — run: keel status --run checkout
+BLOCK KC-09 specs/checkout/requirements.md: G1 was sealed at different content than
+     specs/checkout/requirements.md now holds — restore the sealed content, or
+     re-confirm with your human and run: keel gate reopen G1 --run checkout
+
+BLOCKED: G1 was sealed at different content than specs/checkout/requirements.md now holds …
+$ echo $?
+1
+```
+
+Restore the exact bytes that were sealed, and it heals with no cleanup step:
+
+```
+$ git checkout -- specs/checkout/requirements.md
+$ keel check --run checkout
+0 blocking · 2 warning(s)
+$ echo $?
+0
+```
+
+*(The 2 warnings are `KC-13` — the two commits above carry no `Agent-*` attribution trailer,
+because they were made by a human typing `git commit` directly rather than through an agent with
+the hook's environment set. That's exactly what the rule is supposed to catch.)*
+
+## How it works
+
+```mermaid
+graph TB
+    agent["Agent<br/>Claude Code · Cursor · Codex"]
+    human["Human"]
+    ci["CI<br/>GitHub Action"]
+
+    cli["keel CLI<br/>verification only — never authors content"]
+
+    subgraph repo["Your repository"]
+        specs["specs/&lt;run&gt;/<br/>requirements · hld · lld · tasks …"]
+        ledger[(".keel/gates.jsonl<br/>append-only, hash-anchored")]
+        manifest["keel.yaml"]
+    end
+
+    agent -->|"phase skill blocked until<br/>its gate is sealed"| cli
+    human -->|"gate pass — prints the seal,<br/>then confirms before writing"| cli
+    ci -->|"check --ci on every PR"| cli
+    cli --> specs
+    cli --> ledger
+    cli --> manifest
+```
+
+A gate isn't "sealed" because a file says `status: signed-off` — it's sealed because
+`.keel/gates.jsonl` has a line whose hash matches that file's exact working-tree content, right now.
+Edit the file after signing it, and the seal breaks the instant `keel check` runs — not at the next
+review, not when someone happens to notice.
 
 ## Why it's built this way
 
-The expensive failure in AI-assisted development is the agent that designs or codes before the problem is locked, anchors on a partial reading, and produces work that has to be torn down. Keel's gates make that failure structurally impossible: **no design before requirements are locked, no code before the design is signed off.**
+The expensive failure in AI-assisted development is the agent that designs or codes before the
+problem is locked, anchors on a partial reading, and produces work that has to be torn down. Keel's
+gates make that failure structurally impossible: **no design before requirements are locked, no code
+before the design is signed off** — and in v2, that rule is enforced by an exit code, not a
+convention the agent might skip under a long context window.
 
-It borrows the proven ideas from the field — versioned markdown specs as the source of truth, EARS-style acceptance criteria, an always-on "constitution," explicit quality gates, dependency-ordered tasks, ADRs — and adds three things most frameworks lack:
+It borrows proven ideas — versioned markdown specs, EARS-style acceptance criteria, an always-on
+"constitution," dependency-ordered tasks, ADRs — and adds what most agent-facing frameworks lack:
 
-1. **HLD and LLD as distinct, separately-gated layers** (with UML/Mermaid diagrams), instead of one merged "design" doc.
-2. **An explicit Stack-Lock gate** between high-level design and implementation, so the tech choice is a recorded decision, not an assumption.
-3. **Modular rigor profiles** — toggle production concerns (observability, resilience, security depth) per project instead of all-or-nothing.
-
----
-
-## How to use it
-
-**With Claude Code:** open this folder and run the phase commands in order:
-
-```
-/kickoff  →  /requirements  →  /hld  →  /stack  →  /lld  →  /tasks  →  /review
-```
-
-**With any other agent (Codex, Cursor, Gemini, Aider, …):** open `AGENTS.md`, then follow `workflow/lifecycle.md` phase by phase. The workflow has no tool-specific logic.
-
-Each run lives in its own folder under `specs/<run>/`. Artifacts accumulate there; decisions accumulate in `decisions/`.
-
----
+| | Most agent workflows | Keel |
+|---|---|---|
+| Design layers | One merged "design" doc | HLD and LLD **separately gated**, with real diagrams |
+| Tech choice | Assumed, or picked early | An explicit **Stack-Lock gate**, traced to a driver |
+| Rigor | All-or-nothing | **Modular profiles** — toggle observability, security depth, etc. per concern |
+| Sign-off | A chat message | A **hash-anchored ledger entry** that outlives the session |
+| Spec fidelity | Trusted to the model | **Literal Mandates** checked against the design before code is written |
 
 ## What's in here
 
 | Path | What it is |
 |------|------------|
-| `AGENTS.md` | The operating context. Read first. (`CLAUDE.md`, `GEMINI.md` symlink to it.) |
+| `AGENTS.md` | The operating context for any agent. Read first. (`CLAUDE.md`, `GEMINI.md` symlink to it.) |
 | `principles.md` | The constitution — always-on principles and named anti-patterns. |
 | `workflow/lifecycle.md` | The full 8-phase gated playbook. |
 | `workflow/fast-path.md` | Compressed overlay for time-boxed / rapid work. |
 | `profiles/` | Rigor profiles and the concern-by-concern axes. |
 | `templates/` | A fill-in skeleton for every artifact. |
 | `.claude/commands/` | Claude Code slash commands for each phase. |
-| `tools/` | Optional toolchain setup — diagrams via the Kroki MCP. |
-| `skills/` | Optional reusable capability modules (`SKILL.md` pattern). |
-| `specs/` | Per-run artifacts (one folder per run). |
+| `packages/core` | The v2 engine: run model, gate ledger, 13-rule check engine, state projection, scaffold, migrator. |
+| `packages/cli` | The `keel` binary — commander wiring, output formats, the exit-code contract. |
+| `packages/action` | The GitHub Action (`check --ci`) for gating merges. |
+| `specs/keel-v2/` | v2's own run — including [`plan-of-record.md`](specs/keel-v2/plan-of-record.md) (how it was designed vs. what shipped) and [`review-checklist.md`](specs/keel-v2/review-checklist.md) (the ship review). |
 | `decisions/` | Architecture Decision Records. |
-| `examples/` | Worked example runs — read these to see real artifacts. |
+| `examples/` | Worked example runs — `ticket-booking` also doubles as `keel upgrade`'s acceptance test. |
 
----
+## Status & roadmap
 
-## Using Keel as a project seed
+**v2.0.0-alpha**, `packages/cli` not yet published — clone and run via `npx tsx`, as above.
+225 tests pass; Keel enforces its own run at 0 blocking findings.
 
-Keel is self-contained — nothing in it depends on a parent directory. To use it for a new piece of work, copy the folder (or clone the repo) and start a run with `/kickoff` (or, for non-Claude agents, follow `workflow/lifecycle.md`). Artifacts for that run land in `specs/<run>/`; decisions accumulate in `decisions/`.
+- **Next (v2.0.0):** wire `tsup` for `packages/cli`, claim the `@keel-dev` npm scope, publish — so
+  `npx @keel-dev/cli init` works without a clone.
+- **v2.0.x:** a ten-item patch list of documented, deliberate deferrals — see
+  [`review-checklist.md`](specs/keel-v2/review-checklist.md#known-limitations--v20x-candidates).
+- **v2.1:** telemetry and a brownfield `keel survey` for gating changes to existing codebases.
+
+Issues and PRs welcome — this is a young project and still shaping its contribution process.
 
 ## License
 
