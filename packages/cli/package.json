@@ -6,16 +6,20 @@
   "description": "Keel — gate enforcement for AI-assisted development",
   "license": "MIT",
   "bin": {
-    "keel": "./src/main.ts"
+    "keel": "./dist/main.js"
   },
   "exports": {
-    ".": "./src/main.ts"
+    ".": "./dist/main.js"
   },
   "scripts": {
+    "build": "node build.js",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
     "@keel-dev/core": "*",
     "commander": "^14.0.2"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.1"
   }
 }

@@ -5,6 +5,7 @@
  * not author content (M6): it can add an empty form where none existed, and it can do nothing else.
  */
 
+import { existsSync } from "node:fs";
 import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -18,8 +19,21 @@ export interface ScaffoldResult {
 }
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-/** Templates ship with the package; `src/scaffold` → `../../assets/templates`. */
-export const DEFAULT_ASSETS = join(HERE, "..", "..", "assets", "templates");
+
+function resolveAssetsDir(): string {
+  const candidates = [
+    join(HERE, "..", "..", "assets", "templates"),
+    join(HERE, "..", "..", "core", "assets", "templates"),
+    join(HERE, "..", "core", "assets", "templates"),
+  ];
+  for (const candidate of candidates) {
+    if (existsSync(join(candidate, "VERSION"))) return candidate;
+  }
+  return candidates[0];
+}
+
+/** Templates ship with the package; resolved safely across source and bundle locations. */
+export const DEFAULT_ASSETS = resolveAssetsDir();
 
 const CLAUDE_SETTINGS = ".claude/settings.json";
 const COMMIT_HOOK = ".git/hooks/prepare-commit-msg";
@@ -202,6 +216,7 @@ schema_version: 2
 
 function statusFor(name: string): string {
   return `# Run Status — ${name}
+
 
 ## Now
 <!-- DERIVED by keel status — do not hand-edit. -->

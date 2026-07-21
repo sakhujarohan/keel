@@ -12,6 +12,7 @@
     "packages/*"
   ],
   "scripts": {
+    "build": "npm run build --workspaces --if-present",
     "check": "biome check . && npm run typecheck --workspaces && vitest run",
     "typecheck": "npm run typecheck --workspaces",
     "test": "vitest run",

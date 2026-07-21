@@ -57,20 +57,14 @@ program
     }),
   );
 
-program
-  .command("run")
-  .argument("<subcommand>", '"new"')
+const runCmd = program.command("run").description("manage runs under specs/");
+
+runCmd
+  .command("new")
   .argument("<name>", "kebab-case run name")
   .description("create a new run under specs/")
   .action(
-    run(async (subcommand: string, name: string) => {
-      if (subcommand !== "new") {
-        throw new KeelError({
-          code: "ENV_BAD_ROOT",
-          message: `Unknown subcommand "${subcommand}".`,
-          nextAction: "Use: keel run new <name>",
-        });
-      }
+    run(async (name: string) => {
       assertSafeRepoPath(process.cwd(), name);
       const result = await createRun({ repoRoot: process.cwd(), name });
       say(renderScaffold(result));
