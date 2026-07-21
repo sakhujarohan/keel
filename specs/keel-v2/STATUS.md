@@ -3,10 +3,10 @@
 ## Now
 <!-- DERIVED by keel status — do not hand-edit. Glyphs: ✓ sealed · ▶ reopened · ⚠ broken · — not reached. -->
 
-- **Phase:** 5 / 8 — Spec-Compliance Review
-- **Gates:** G1 ✓ (2026-07-20) · G2 ✓ (2026-07-20) · G3 ✓ (2026-07-20) · G4 ✓ (2026-07-20) · G5 ✓ (2026-07-20) · G6 ⚠
+- **Phase:** 8 / 8 — Harden & Review
+- **Gates:** G1 ✓ (2026-07-20) · G2 ✓ (2026-07-20) · G3 ✓ (2026-07-20) · G4 ✓ (2026-07-20) · G5 ✓ (2026-07-20) · G6 ✓ (2026-07-21)
 - **Tasks:** 31 / 31 done
-- **Next action:** G6 no longer holds — restore the sealed content, or re-confirm and run: keel gate pass G6 --run keel-v2
+- **Next action:** Every gate is sealed — run the review and ship it.
 
 ## Session log
 <!-- Append-only, newest on top. /handoff prepends one entry per work session. -->

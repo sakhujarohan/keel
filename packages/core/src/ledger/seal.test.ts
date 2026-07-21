@@ -217,3 +217,53 @@ describe("gateStatuses", () => {
     );
   });
 });
+
+describe("gateStatuses — run-level gates over per-feature predecessors", () => {
+  const requirements = "specs/demo/requirements.md";
+  const hld = "specs/demo/hld.md";
+  const stack = "specs/demo/stack.md";
+  const lldA = "specs/demo/features/alpha/lld.md";
+  const specCheckA = "specs/demo/features/alpha/spec-check.md";
+  const review = "specs/demo/review-checklist.md";
+
+  it("does not block G6 merely because G4/G5 are per-feature", () => {
+    // Every run-level gate sealed, and one feature fully through G4+G5. G6 is the ship review.
+    const view = viewOf([
+      event({ gate: "G1", artifact: requirements }),
+      event({ gate: "G2", artifact: hld }),
+      event({ gate: "G3", artifact: stack }),
+      event({ gate: "G4", artifact: lldA }),
+      event({ gate: "G5", artifact: specCheckA }),
+      event({ gate: "G6", artifact: review }),
+    ]);
+    const hashes = new Map([
+      [requirements, HASH],
+      [hld, HASH],
+      [stack, HASH],
+      [lldA, HASH],
+      [specCheckA, HASH],
+      [review, HASH],
+    ]);
+
+    const statuses = gateStatuses({ run: "demo", view, hashes });
+    const g6 = statuses.find((s) => s.gate === "G6");
+    expect(g6?.seal.kind).toBe("sealed");
+    expect(g6?.blockedBy).toEqual([]);
+  });
+
+  it("still blocks G6 when a run-level predecessor is broken", () => {
+    const view = viewOf([
+      event({ gate: "G1", artifact: requirements }),
+      event({ gate: "G2", artifact: hld }),
+      event({ gate: "G6", artifact: review }),
+    ]);
+    const hashes = new Map([
+      [requirements, OTHER], // G1 broken
+      [hld, HASH],
+      [review, HASH],
+    ]);
+
+    const statuses = gateStatuses({ run: "demo", view, hashes });
+    expect(statuses.find((s) => s.gate === "G6")?.blockedBy).toContain("G1");
+  });
+});

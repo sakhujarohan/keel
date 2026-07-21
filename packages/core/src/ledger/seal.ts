@@ -68,12 +68,17 @@ export function gateStatuses(args: {
       const relevant = statuses.filter((candidate) => {
         if (candidate.gate !== gate) return false;
         if (!FEATURE_GATES.includes(gate)) return true;
-        // A feature-scoped gate is only relevant to artifacts of the same feature.
-        return feature !== null && featureOfArtifact(candidate.artifact) === feature;
+        // A feature-scoped predecessor (G4/G5) is judged two ways. If the dependent gate belongs
+        // to a feature, only that feature's instance matters. If the dependent is run-level (G6,
+        // which has no feature), it rests on *every* feature's instance being sealed — so a
+        // run-level gate never blocks itself merely for not matching a feature.
+        return feature === null || featureOfArtifact(candidate.artifact) === feature;
       });
 
-      // No record at all counts as not sealed: a gate cannot rest on one that never passed.
-      return relevant.length === 0 || !relevant.every(isSealed);
+      // No record at all counts as not sealed — but only for gates that should exist. A run-level
+      // gate is not blocked by a feature gate that no feature ever reached.
+      if (relevant.length === 0) return FEATURE_GATES.includes(gate) ? feature !== null : true;
+      return !relevant.every(isSealed);
     });
   }
 
