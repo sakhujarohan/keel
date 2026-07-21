@@ -23,6 +23,7 @@ export const DEFAULT_ASSETS = join(HERE, "..", "..", "assets", "templates");
 
 const CLAUDE_SETTINGS = ".claude/settings.json";
 const COMMIT_HOOK = ".git/hooks/prepare-commit-msg";
+const SEC_GUARD_HOOK = ".git/hooks/pre-push";
 
 /** Which gate each phase skill may not run before. */
 export const PHASE_GATE_MATCHERS: { skill: string; gate: string }[] = [
@@ -51,6 +52,7 @@ export async function init(args: {
 
   await writeClaudeSettings(repoRoot, result);
   await write(repoRoot, COMMIT_HOOK, commitHookScript(), result, 0o755);
+  await write(repoRoot, SEC_GUARD_HOOK, secGuardHookScript(), result, 0o755);
 
   return result;
 }
@@ -245,6 +247,13 @@ fi
 # A hook that exits non-zero aborts the commit. The last append above returns non-zero whenever
 # its value was empty, so end deliberately clean — never block a commit over a missing trailer.
 exit 0
+`;
+}
+
+function secGuardHookScript(): string {
+  return `#!/bin/sh
+# Installed by keel init. Runs local security audit before pushing code to origin.
+npx keel-sec-guard audit --branch main --fail-on HIGH
 `;
 }
 
