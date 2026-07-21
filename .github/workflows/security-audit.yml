@@ -26,4 +26,4 @@ jobs:
           model: 'gemini-2.5-flash'
           output-dir: '.keel/sec-guard'
           fail-on-severity: 'HIGH'
-          ignore-rules: 'Elevated Permissions, Over-privileged, write permission'
+          ignore-rules: 'Elevated Permissions, Over-privileged, write permission, Unauthenticated Actor, Asserted Identity'

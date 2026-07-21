@@ -9,6 +9,7 @@
 
 import { createInterface } from "node:readline/promises";
 import {
+  assertSafeRepoPath,
   buildContext,
   commitSeal,
   createGitAnchor,
@@ -70,6 +71,7 @@ program
           nextAction: "Use: keel run new <name>",
         });
       }
+      assertSafeRepoPath(process.cwd(), name);
       const result = await createRun({ repoRoot: process.cwd(), name });
       say(renderScaffold(result));
       say(`\nnext: frame the problem in specs/${name}/context.md, then draft requirements`);
@@ -90,6 +92,10 @@ program
       const repoRoot = process.cwd();
       const format = (opts.format ?? "human") as Format;
       const anchor = createGitAnchor(repoRoot);
+
+      if (opts.run) {
+        assertSafeRepoPath(repoRoot, opts.run);
+      }
 
       // The hook path: answer one question without parsing a single markdown file.
       if (opts.require) {
@@ -155,6 +161,9 @@ gate
       const runName = opts.run as string;
       const artifact = opts.artifact as string;
 
+      assertSafeRepoPath(repoRoot, runName);
+      assertSafeRepoPath(repoRoot, artifact);
+
       const prepared = await prepareSeal({
         repoRoot,
         anchor,
@@ -196,20 +205,26 @@ gate
   .action(
     run(async (gateId: string, opts: Record<string, string>) => {
       const repoRoot = process.cwd();
+      const runName = opts.run as string;
+      const artifact = opts.artifact as string;
+
+      assertSafeRepoPath(repoRoot, runName);
+      assertSafeRepoPath(repoRoot, artifact);
+
       await reopenGate({
         repoRoot,
         anchor: createGitAnchor(repoRoot),
-        run: opts.run as string,
+        run: runName,
         gate: gateId as Gate,
-        artifact: opts.artifact as string,
+        artifact,
       });
       await project({
         repoRoot,
-        runName: opts.run as string,
-        artifact: opts.artifact as string,
+        runName,
+        artifact,
         status: "reopened",
       });
-      say(`${gateId} reopened — re-confirm it, then: keel gate pass ${gateId} --run ${opts.run}`);
+      say(`${gateId} reopened — re-confirm it, then: keel gate pass ${gateId} --run ${runName}`);
       return EXIT_OK;
     }),
   );
@@ -221,6 +236,10 @@ program
   .action(
     run(async (opts: Record<string, string | undefined>) => {
       const repoRoot = process.cwd();
+      if (opts.run) {
+        assertSafeRepoPath(repoRoot, opts.run);
+      }
+
       const model = await loadRunModel(repoRoot, opts.run ? { runFilter: opts.run } : {});
       const ledger = await readLedger(repoRoot);
       const anchor = createGitAnchor(repoRoot);
@@ -288,6 +307,8 @@ async function project(args: {
   status: "signed-off" | "reopened";
 }): Promise<void> {
   const { repoRoot, runName, artifact, status } = args;
+
+  assertSafeRepoPath(repoRoot, artifact);
 
   await setArtifactState({
     repoRoot,
