@@ -35,7 +35,7 @@ Option C, with working-tree seal verification and derived invalidation. The ledg
 
 ## Pitfalls & limitations of the chosen option
 
-Git identity in `actor` is asserted, not authenticated (accepted in plan decision D3; verified identities arrive with the v3 GitHub App). Whitespace-only edits to a sealed artifact still break the seal — `hash-object` is exact; this is deliberate (no semantic-equivalence judgment calls) but will occasionally annoy someone fixing a typo, who must re-confirm the gate. Deleting `.keel/gates.jsonl` unseals everything; the file must be protected like any source of record (CODEOWNERS, required CI check).
+Git identity in `actor` is asserted, not authenticated (accepted in plan decision D3; verified identities arrive with the v3 GitHub App). Whitespace-only edits to a sealed artifact still break the seal — `hash-object` is exact; this is deliberate (no semantic-equivalence judgment calls) but will occasionally annoy someone fixing a typo, who must re-confirm the gate. Deleting `.keel/gates.jsonl` triggers a blocking KC-09 integrity failure in `keel check`; the ledger file must be protected like any source of record (CODEOWNERS, required CI check).
 
 ## Consequences
 

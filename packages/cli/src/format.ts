@@ -48,12 +48,23 @@ function renderAgent(report: CheckReport): string {
   return lines.join("\n");
 }
 
+function escapeProperty(s: string): string {
+  return s
+    .replace(/%/g, "%25")
+    .replace(/\r/g, "%0D")
+    .replace(/\n/g, "%0A")
+    .replace(/:/g, "%3A")
+    .replace(/,/g, "%2C");
+}
+
 function renderCi(report: CheckReport): string {
   const lines = report.findings.map((finding) => {
     const level = finding.severity === "block" ? "error" : "warning";
     const position = finding.line !== undefined ? `,line=${finding.line}` : "";
-    // Annotations must be one line; newlines inside a message would end it early.
-    return `::${level} file=${finding.path}${position},title=${finding.rule}::${finding.message.replace(/\n/g, " ")}`;
+    const file = escapeProperty(finding.path);
+    const title = escapeProperty(finding.rule);
+    const msg = finding.message.replace(/\r?\n/g, " ");
+    return `::${level} file=${file}${position},title=${title}::${msg}`;
   });
 
   lines.push(`keel: ${report.blocking} blocking, ${report.warnings} warning(s)`);
