@@ -12,6 +12,7 @@ import { blobId, type GitAnchor } from "../anchor/git.js";
 import { type GateEvent, isKeelOwnedPath } from "../ledger/event.js";
 import { appendGateEvent, readLedger, type SealKey } from "../ledger/ledger.js";
 import { applyArtifactState } from "../model/frontmatter-state.js";
+import { assertSafeRepoPath } from "../model/paths.js";
 import type { Gate } from "../model/types.js";
 import { GateRefusal } from "./refusal.js";
 
@@ -38,13 +39,15 @@ export async function prepareSeal(
 ): Promise<PreparedSeal> {
   const { repoRoot, anchor, run, gate, artifact, allowDirty = false } = args;
 
+  const safeArtifact = assertSafeRepoPath(repoRoot, artifact);
+
   // Seal the artifact as it will be *once signed*: sealing flips its frontmatter to signed-off,
   // and if we hashed the pre-flip content the seal would break itself the instant the projection
   // is written. Hashing the post-flip content keeps the working tree matching the seal.
   const context = await gatherContext({
     repoRoot,
     anchor,
-    artifact,
+    artifact: safeArtifact,
     sealAs: "signed-off",
     now: args.now,
   });
@@ -66,7 +69,7 @@ export async function prepareSeal(
     });
   }
 
-  const key: SealKey = { run, gate, artifact };
+  const key: SealKey = { run, gate, artifact: safeArtifact };
   const view = await readLedger(repoRoot);
   const priorEvent = view.latestFor(key);
 
@@ -74,7 +77,7 @@ export async function prepareSeal(
   if (priorEvent?.event === "pass" && priorEvent.artifact_hash === context.hash) {
     throw new GateRefusal({
       reason: "already-sealed",
-      message: `${gate} is already sealed for ${artifact} at this exact content.`,
+      message: `${gate} is already sealed for ${safeArtifact} at this exact content.`,
       nextAction: `Nothing to do. To record a change, edit the artifact first, or run: keel gate reopen ${gate} --run ${run}`,
     });
   }
@@ -83,7 +86,7 @@ export async function prepareSeal(
     run,
     gate,
     event: "pass",
-    artifact,
+    artifact: safeArtifact,
     artifact_hash: context.hash,
     actor: context.actor,
     commit: context.commit,
@@ -105,10 +108,12 @@ export async function commitSeal(args: {
 /** Reopening records intent; it never erases what came before. */
 export async function reopenGate(args: GateArgs): Promise<GateEvent> {
   const { repoRoot, anchor, run, gate, artifact } = args;
+  const safeArtifact = assertSafeRepoPath(repoRoot, artifact);
+
   const context = await gatherContext({
     repoRoot,
     anchor,
-    artifact,
+    artifact: safeArtifact,
     sealAs: "reopened",
     now: args.now,
   });
@@ -117,7 +122,7 @@ export async function reopenGate(args: GateArgs): Promise<GateEvent> {
     run,
     gate,
     event: "reopen",
-    artifact,
+    artifact: safeArtifact,
     artifact_hash: context.hash,
     actor: context.actor,
     commit: context.commit,
@@ -166,13 +171,15 @@ async function gatherContext(args: {
     });
   }
 
+  const safeArtifact = assertSafeRepoPath(repoRoot, artifact);
+
   let raw: string;
   try {
-    raw = await readFile(join(repoRoot, artifact), "utf8");
+    raw = await readFile(join(repoRoot, safeArtifact), "utf8");
   } catch {
     throw new GateRefusal({
       reason: "artifact-missing",
-      message: `${artifact} does not exist, so there is nothing to seal.`,
+      message: `${safeArtifact} does not exist, so there is nothing to seal.`,
       nextAction: "Write the artifact first, then seal its gate.",
     });
   }

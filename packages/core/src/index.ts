@@ -24,6 +24,7 @@ export * from "./ledger/seal.js";
 export * from "./migrate/upgrade.js";
 export * from "./model/frontmatter-state.js";
 export * from "./model/index.js";
+export * from "./model/paths.js";
 export * from "./project/render.js";
 export * from "./project/state.js";
 export * from "./project/write.js";

@@ -10,6 +10,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { KeelError } from "../model/errors.js";
 import { isKebabName } from "../model/ids.js";
+import { assertSafeRepoPath } from "../model/paths.js";
 
 export interface ScaffoldResult {
   written: string[];
@@ -69,7 +70,7 @@ export async function createRun(args: {
     });
   }
 
-  const dir = join(specsDir, name);
+  const dir = assertSafeRepoPath(repoRoot, join(specsDir, name));
   if (await exists(join(repoRoot, dir))) {
     throw new KeelError({
       code: "ENV_BAD_ROOT",
@@ -96,16 +97,17 @@ async function write(
   result: ScaffoldResult,
   mode?: number,
 ): Promise<void> {
-  const absolute = join(repoRoot, path);
+  const safePath = assertSafeRepoPath(repoRoot, path);
+  const absolute = join(repoRoot, safePath);
 
   if (await exists(absolute)) {
-    result.skipped.push(path);
+    result.skipped.push(safePath);
     return;
   }
 
   await mkdir(dirname(absolute), { recursive: true });
   await writeFile(absolute, contents, mode !== undefined ? { mode } : "utf8");
-  result.written.push(path);
+  result.written.push(safePath);
 }
 
 async function exists(absolute: string): Promise<boolean> {

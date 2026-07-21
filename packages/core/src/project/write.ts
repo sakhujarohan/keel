@@ -11,6 +11,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { KeelError } from "../model/errors.js";
 import { applyArtifactState } from "../model/frontmatter-state.js";
+import { assertSafeRepoPath } from "../model/paths.js";
 import type { ArtifactStatus, RunEntry } from "../model/types.js";
 import { renderNowBlock, SESSION_LOG_HEADING } from "./render.js";
 import type { RunState } from "./state.js";
@@ -26,7 +27,8 @@ export async function writeStatus(args: {
   run: RunEntry;
   state: RunState;
 }): Promise<WriteResult> {
-  const path = `${args.run.dir}/STATUS.md`;
+  const safeRunDir = assertSafeRepoPath(args.repoRoot, args.run.dir);
+  const path = `${safeRunDir}/STATUS.md`;
   const absolute = join(args.repoRoot, path);
 
   const raw = await read(absolute, path);
@@ -59,8 +61,9 @@ export async function setArtifactState(args: {
   /** YYYY-MM-DD, supplied by the caller — this feature never reads a clock. */
   updated: string;
 }): Promise<WriteResult> {
-  const absolute = join(args.repoRoot, args.path);
-  const raw = await read(absolute, args.path);
+  const safePath = assertSafeRepoPath(args.repoRoot, args.path);
+  const absolute = join(args.repoRoot, safePath);
+  const raw = await read(absolute, safePath);
 
   // The identical transform gate-ledger hashed when it sealed, so the written bytes match the
   // seal to the byte and the projection never breaks the seal it belongs to.
@@ -74,16 +77,16 @@ export async function setArtifactState(args: {
           : "frontmatter has no `updated:` line to update";
     throw new KeelError({
       code: "ENV_UNREADABLE",
-      message: `${args.path} ${detail}.`,
-      nextAction: `Fix the frontmatter of ${args.path}, then re-run.`,
+      message: `${safePath} ${detail}.`,
+      nextAction: `Fix the frontmatter of ${safePath}, then re-run.`,
       path: absolute,
     });
   }
 
-  if (!result.changed) return { path: args.path, changed: false };
+  if (!result.changed) return { path: safePath, changed: false };
 
   await writeFile(absolute, result.text, "utf8");
-  return { path: args.path, changed: true };
+  return { path: safePath, changed: true };
 }
 
 async function read(absolute: string, path: string): Promise<string> {
