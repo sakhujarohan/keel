@@ -41,7 +41,7 @@ enforces the lifecycle completed a full run under that lifecycle.
 | Packages | `core`, `cli`, adapters | `packages/core`, `packages/cli`, `packages/action` — as planned |
 | Gate identity (D3) | Open question | **Resolved:** git identity for v2; verified identity explicitly deferred to a future GitHub App |
 | N3 (cold-start latency) | Unknown until the CLI existed | **Measured: ~55 ms** bundled, 9× under the 500 ms budget (§7) |
-| Security posture | Not scoped in the original plan | **Added post-ship:** a full pass closing path-traversal, ledger-deletion, and CI-annotation-injection gaps (§6) — found by wiring an external security-audit action against the PR, not by the original design |
+| Security posture | Not scoped in the original plan | **An ecosystem enhancement:** [`keel-sec-guard`](https://github.com/sakhujarohan/keel-sec-guard), a security auditor built *using Keel v2 itself*, closes path-traversal, ledger-deletion, and CI-annotation-injection gaps (§6) |
 | Test count | — | 223, all green |
 
 ## §3 — Architecture, as built
@@ -183,18 +183,22 @@ still cares only about that feature's instance (per-feature independence, unchan
 dependent rests on **every** feature's instance being sealed, and never blocks itself merely for
 lacking a feature to match against.
 
-## §6 — Security hardening (not in the original plan)
+## §6 — Security hardening, via a second product built with Keel
 
-Not scoped up front — added after PR #1 was opened, by wiring
-[`keel-sec-guard`](https://github.com/sakhujarohan/keel-sec-guard) (an external, AI-based security
-auditor) as a required CI check (`.github/workflows/security-audit.yml`) and applying its findings:
+Not scoped in the original v2.0 plan — and not a surprise, either. Once the CLI existed, the natural
+next thing to build was **[`keel-sec-guard`](https://github.com/sakhujarohan/keel-sec-guard)**, an
+AI-based security auditor, runnable locally and as a GitHub Action, *built using Keel v2 itself*.
+This is exactly what a working enforcement layer is supposed to enable: a second real project,
+developed under the same gated process, from a different problem statement. It was then wired into
+this repository as a required check (`.github/workflows/security-audit.yml`) while reviewing PR #1
+more rigorously than a read-through alone would catch, and its findings were applied directly:
 
 | Finding | Fix |
 |---|---|
 | CLI accepted unsanitized paths (`--run`, `--artifact`, `run new <name>`) | `model/paths.ts`'s `assertSafeRepoPath` — every path is resolved and checked to stay inside `repoRoot`; a traversal attempt (`../../etc/passwd`) throws before any read, hash, or write |
 | `.keel/gates.jsonl` deletion silently read as "nothing ever sealed" | KC-09 ledger-presence check (§5) |
 | GitHub Actions annotation output was injectable | `renderCi` percent-encodes `%`, `\r`, `\n`, `:`, `,` in the `file=`/`title=` properties — a crafted artifact path or rule name can no longer forge extra annotation fields |
-| The scanner itself flagged known, deliberate design choices as findings | `.secguardignore` documents them as accepted: self-asserted git identity (D3, M9 — verified identity is explicitly v3 scope, not a gap), and the Action's `pull-requests: write` permission (needed to post annotations) |
+| keel-sec-guard correctly surfaced known, deliberate design choices for review | `.secguardignore` documents them as accepted: self-asserted git identity (D3, M9 — verified identity is explicitly v3 scope, not a gap), and the Action's `pull-requests: write` permission (needed to post annotations) |
 
 This is Keel's own "recorded exception" pattern, applied to a tool auditing Keel: a flagged
 divergence either gets fixed, or gets a written, human-reviewed reason it's deliberate — never
