@@ -48,7 +48,7 @@ export async function buildContext(args: {
   return deepFreeze({ model, ledger, hashes, gates, commits });
 }
 
-export function artifactPathsOf(run: RunEntry): string[] {
+export function artifactDocsOf(run: RunEntry): ArtifactDoc[] {
   const docs: (ArtifactDoc | undefined)[] = [
     run.context,
     run.requirements,
@@ -60,7 +60,11 @@ export function artifactPathsOf(run: RunEntry): string[] {
   for (const feature of run.features) {
     docs.push(feature.lld, feature.specCheck, feature.tasks);
   }
-  return docs.filter((doc): doc is ArtifactDoc => doc !== undefined).map((doc) => doc.path);
+  return docs.filter((doc): doc is ArtifactDoc => doc !== undefined);
+}
+
+export function artifactPathsOf(run: RunEntry): string[] {
+  return artifactDocsOf(run).map((doc) => doc.path);
 }
 
 /** Rules must not be able to scribble on their own inputs, even by accident. */

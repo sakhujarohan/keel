@@ -183,6 +183,50 @@ describe("a repository that does not use Keel", () => {
   });
 });
 
+describe("KC-09 ledger presence — absence alone is not suspicion", () => {
+  it("does not flag a brand-new run that has never sealed anything", async () => {
+    // A repo straight out of `keel init` + `keel run new`: a context.md at status "set" (the
+    // scaffold's default) and nothing else — no ledger, nothing claiming signed-off. That is the
+    // ordinary starting state, not tampering, and must not block the very first check.
+    await write("keel.yaml", "schema: 2\ntemplates_version: 2.0.0\n");
+    await write(
+      "specs/demo/context.md",
+      `---
+artifact: context
+phase: 0
+gate: "—"
+status: set
+updated: 2026-07-21
+schema_version: 2
+---
+
+# Run Context — demo
+`,
+    );
+    await git(["add", "-A"]);
+    await git(["commit", "-q", "-m", "seed"]);
+
+    const report = runChecks(await contextFor(root));
+    expect(report.findings.filter((f) => f.rule === "KC-09")).toEqual([]);
+  });
+
+  it("flags a missing ledger when an artifact still claims signed-off", async () => {
+    // Seal for real, then delete the ledger by hand — the frontmatter still says signed-off,
+    // which is exactly the history-erasure the check exists to catch.
+    await seedRun();
+    await git(["add", "-A"]);
+    await git(["commit", "-q", "-m", "seed"]);
+    await sealGate(root, "demo", "G1", "specs/demo/requirements.md");
+
+    await rm(join(root, ".keel", "gates.jsonl"));
+
+    const report = runChecks(await contextFor(root));
+    const finding = report.findings.find((f) => f.rule === "KC-09");
+    expect(finding?.message).toContain("claims signed-off");
+    expect(report.exitCode).toBe(1);
+  });
+});
+
 describe("gate rules against real seals", () => {
   it("blocks an HLD that exists before G1 is sealed", async () => {
     await seedRun();

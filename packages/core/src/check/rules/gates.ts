@@ -5,6 +5,7 @@
 
 import type { Gate } from "../../model/types.js";
 import { defineRule, type Finding, finding, type Rule } from "../catalog.js";
+import { artifactDocsOf } from "../context.js";
 
 /** The gate an artifact may not exist before. */
 const REQUIRES_SEALED: {
@@ -99,13 +100,21 @@ export const kc09 = defineRule({
   evaluate(ctx) {
     const findings: Finding[] = [];
 
-    if (!ctx.ledger.exists && ctx.model.manifest !== null && ctx.model.runs.length > 0) {
+    // Absence alone is not suspicious — a brand-new project that hasn't sealed anything yet has
+    // no ledger either. What is suspicious is an artifact whose frontmatter *claims* signed-off
+    // with nothing left to back that claim: that is exactly the shape of history-erasure via
+    // deleting .keel/gates.jsonl, and it cannot happen on an honestly-new repo.
+    const hasUnbackedSignOff = ctx.model.runs.some((run) =>
+      artifactDocsOf(run).some((doc) => doc.frontmatter.status === "signed-off"),
+    );
+
+    if (!ctx.ledger.exists && hasUnbackedSignOff) {
       findings.push(
         finding({
           rule: "KC-09",
           path: ".keel/gates.jsonl",
           message:
-            ".keel/gates.jsonl is missing in an initialized repository — restore the gate ledger from git history to ensure gate integrity.",
+            ".keel/gates.jsonl is missing, but an artifact's frontmatter claims signed-off — restore the gate ledger from git history to ensure gate integrity.",
         }),
       );
     }
