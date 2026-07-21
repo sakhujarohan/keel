@@ -22,5 +22,6 @@ jobs:
         uses: sakhujarohan/keel-sec-guard@main
         with:
           gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
+          model: 'gemini-2.5-flash'
           output-dir: '.keel/sec-guard'
           fail-on-severity: 'HIGH'
