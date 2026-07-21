@@ -96,6 +96,9 @@ program
       if (opts.run) {
         assertSafeRepoPath(repoRoot, opts.run);
       }
+      if (opts.feature) {
+        assertSafeRepoPath(repoRoot, opts.feature);
+      }
 
       // The hook path: answer one question without parsing a single markdown file.
       if (opts.require) {
