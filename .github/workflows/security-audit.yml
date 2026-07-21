@@ -1,0 +1,26 @@
+name: Security Audit
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  security-audit:
+    name: Keel Security Guard Audit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Keel Security Guard
+        uses: sakhujarohan/keel-sec-guard@main
+        with:
+          gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
+          output-dir: '.keel/sec-guard'
+          fail-on-severity: 'HIGH'
