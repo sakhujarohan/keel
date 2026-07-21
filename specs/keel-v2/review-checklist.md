@@ -2,7 +2,7 @@
 artifact: review
 phase: 8
 gate: G6
-status: draft
+status: signed-off
 updated: 2026-07-21
 ---
 

@@ -4,9 +4,9 @@
 <!-- DERIVED by keel status — do not hand-edit. Glyphs: ✓ sealed · ▶ reopened · ⚠ broken · — not reached. -->
 
 - **Phase:** 5 / 8 — Spec-Compliance Review
-- **Gates:** G1 ✓ (2026-07-20) · G2 ✓ (2026-07-20) · G3 ✓ (2026-07-20) · G4 ✓ (2026-07-20) · G5 ✓ (2026-07-20) · G6 —
+- **Gates:** G1 ✓ (2026-07-20) · G2 ✓ (2026-07-20) · G3 ✓ (2026-07-20) · G4 ✓ (2026-07-20) · G5 ✓ (2026-07-20) · G6 ⚠
 - **Tasks:** 31 / 31 done
-- **Next action:** Produce and confirm the artifact for G6, then run: keel gate pass G6 --run keel-v2
+- **Next action:** G6 no longer holds — restore the sealed content, or re-confirm and run: keel gate pass G6 --run keel-v2
 
 ## Session log
 <!-- Append-only, newest on top. /handoff prepends one entry per work session. -->
