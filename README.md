@@ -99,27 +99,35 @@ the hook's environment set. That's exactly what the rule is supposed to catch.)*
 
 ## How it works
 
-```mermaid
-graph TB
-    agent["Agent<br/>Claude Code · Cursor · Codex"]
-    human["Human"]
-    ci["CI<br/>GitHub Action"]
+![How Keel works: an agent, a human, and CI all talk to the keel CLI, which is the only thing that reads and writes the repository's specs, ledger, and manifest](specs/keel-v2/diagrams/readme-architecture.png)
 
-    cli["keel CLI<br/>verification only — never authors content"]
+<details>
+<summary>Diagram source (D2)</summary>
 
-    subgraph repo["Your repository"]
-        specs["specs/&lt;run&gt;/<br/>requirements · hld · lld · tasks …"]
-        ledger[(".keel/gates.jsonl<br/>append-only, hash-anchored")]
-        manifest["keel.yaml"]
-    end
+```d2
+direction: right
 
-    agent -->|"phase skill blocked until<br/>its gate is sealed"| cli
-    human -->|"gate pass — prints the seal,<br/>then confirms before writing"| cli
-    ci -->|"check --ci on every PR"| cli
-    cli --> specs
-    cli --> ledger
-    cli --> manifest
+agent: "Agent\nClaude Code · Cursor · Codex" { shape: person }
+human: "Human" { shape: person }
+ci: "CI\nGitHub Action" { shape: cloud }
+
+cli: "keel CLI\nverification only — never authors content"
+
+repo: "Your repository" {
+  specs: "specs/<run>/\nrequirements · hld · lld · tasks …"
+  ledger: ".keel/gates.jsonl\nappend-only, hash-anchored" { shape: cylinder }
+  manifest: "keel.yaml"
+}
+
+agent -> cli: "phase skill blocked until\nits gate is sealed"
+human -> cli: "gate pass — prints the seal,\nthen confirms before writing"
+ci -> cli: "check --ci on every PR"
+cli -> repo.specs
+cli -> repo.ledger
+cli -> repo.manifest
 ```
+
+</details>
 
 A gate isn't "sealed" because a file says `status: signed-off` — it's sealed because
 `.keel/gates.jsonl` has a line whose hash matches that file's exact working-tree content, right now.

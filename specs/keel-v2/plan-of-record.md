@@ -46,75 +46,91 @@ enforces the lifecycle completed a full run under that lifecycle.
 
 ## §3 — Architecture, as built
 
-```mermaid
-graph TB
-    subgraph agents["Agents"]
-        cc["Claude Code<br/>PreToolUse hooks"]
-        other["Cursor · Codex · Aider<br/>via AGENTS.md convention"]
-    end
+![System shape: agents and CI call the keel CLI, which reads and writes specs, the ledger, and the manifest inside the repository](diagrams/shipped-architecture.png)
 
-    subgraph keel["keel CLI (npx @keel-dev/cli)"]
-        cli["@keel-dev/cli<br/>commander wiring · 3 output formats"]
-        core["@keel-dev/core"]
-    end
+<details>
+<summary>Diagram source (D2)</summary>
 
-    subgraph repo["Repository (all state lives here)"]
-        specs["specs/&lt;run&gt;/<br/>artifacts + STATUS.md"]
-        ledger[(".keel/gates.jsonl<br/>append-only, hash-anchored")]
-        manifest["keel.yaml"]
-    end
+```d2
+direction: right
 
-    ci["GitHub Action<br/>packages/action"]
+agents: "Agents" {
+  cc: "Claude Code\nPreToolUse hooks"
+  other: "Cursor · Codex · Aider\nvia AGENTS.md convention"
+}
 
-    cc -->|"check --require (fast path)"| cli
-    other -->|manual invocation| cli
-    ci -->|"check --ci"| cli
-    cli --> core
-    core -->|reads| specs
-    core -->|reads · appends| ledger
-    core -->|reads| manifest
-    core -->|"writes: ledger entries,<br/>state frontmatter, STATUS Now zone"| specs
+keel: "keel CLI  (npx @keel-dev/cli)" {
+  cli: "@keel-dev/cli\ncommander wiring · 3 output formats"
+  core: "@keel-dev/core"
+  cli -> core
+}
+
+repo: "Repository (all state lives here)" {
+  specs: "specs/<run>/\nartifacts + STATUS.md"
+  ledger: ".keel/gates.jsonl\nappend-only, hash-anchored" { shape: cylinder }
+  manifest: "keel.yaml"
+}
+
+ci: "GitHub Action\npackages/action"
+
+agents.cc -> keel.cli: "check --require\n(fast path)"
+agents.other -> keel.cli: "manual invocation"
+ci -> keel.cli: "check --ci"
+keel.core -> repo.specs: reads
+keel.core -> repo.ledger: "reads · appends"
+keel.core -> repo.manifest: reads
+keel.core -> repo.specs: "writes: ledger entries,\nstate frontmatter, STATUS Now zone" { style.stroke-dash: 3 }
 ```
+
+</details>
 
 `packages/core` internals, matching the shipped module layout:
 
-```mermaid
-graph LR
-    subgraph model["model/"]
-        loader["RunModel loader<br/>the only reader of artifacts"]
-    end
-    subgraph anchor["anchor/"]
-        git["GitAnchor<br/>the only door to git"]
-    end
-    subgraph ledger_["ledger/"]
-        led["ledger.ts + event.ts + seal.ts"]
-    end
-    subgraph gate_["gate/"]
-        ops["operations.ts<br/>prepareSeal · commitSeal · reopenGate"]
-    end
-    subgraph check_["check/"]
-        rules["13 rules · engine · report"]
-    end
-    subgraph project_["project/"]
-        proj["state.ts · render.ts · write.ts<br/>the only writer into artifacts"]
-    end
-    subgraph scaffold_["scaffold/"]
-        scaf["init · doctor"]
-    end
-    subgraph migrate_["migrate/"]
-        mig["upgrade.ts"]
-    end
+![packages/core module dependency graph: gate, check, project and migrate each depend on ledger and/or model and/or anchor, with model as the only reader of artifacts and anchor as the only door to git](diagrams/shipped-core-modules.png)
 
-    gate_ --> ledger_
-    gate_ --> anchor
-    check_ --> model
-    check_ --> ledger_
-    project_ --> ledger_
-    project_ --> model
-    migrate_ --> ledger_
-    migrate_ --> anchor
-    scaf --> model
+<details>
+<summary>Diagram source (D2)</summary>
+
+```d2
+direction: right
+
+model: "model/" {
+  loader: "RunModel loader\nthe only reader of artifacts"
+}
+anchor: "anchor/" {
+  git: "GitAnchor\nthe only door to git"
+}
+ledgerdir: "ledger/" {
+  led: "ledger + event + seal"
+}
+gatedir: "gate/" {
+  ops: "operations\nprepareSeal · commitSeal · reopenGate"
+}
+checkdir: "check/" {
+  rules: "13 rules · engine · report"
+}
+projectdir: "project/" {
+  proj: "state · render · write\nthe only writer into artifacts"
+}
+scaffolddir: "scaffold/" {
+  scaf: "init · doctor"
+}
+migratedir: "migrate/" {
+  mig: "upgrade"
+}
+
+gatedir -> ledgerdir
+gatedir -> anchor
+checkdir -> model
+checkdir -> ledgerdir
+projectdir -> ledgerdir
+projectdir -> model
+migratedir -> ledgerdir
+migratedir -> anchor
+scaffolddir -> model
 ```
+
+</details>
 
 Two packages, three adapters, no logic in the adapters — a new agent is a hook config, not a code
 change.
