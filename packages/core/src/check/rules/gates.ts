@@ -99,6 +99,17 @@ export const kc09 = defineRule({
   evaluate(ctx) {
     const findings: Finding[] = [];
 
+    if (!ctx.ledger.exists && ctx.model.manifest !== null && ctx.model.runs.length > 0) {
+      findings.push(
+        finding({
+          rule: "KC-09",
+          path: ".keel/gates.jsonl",
+          message:
+            ".keel/gates.jsonl is missing in an initialized repository — restore the gate ledger from git history to ensure gate integrity.",
+        }),
+      );
+    }
+
     for (const diagnostic of ctx.ledger.diagnostics) {
       findings.push(
         finding({
