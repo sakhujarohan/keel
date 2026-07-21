@@ -27,6 +27,7 @@ function viewOf(entries: GateEvent[]): LedgerView {
   const keyOf = (k: { run: string; gate: string; artifact: string }) =>
     `${k.run} ${k.gate} ${k.artifact}`;
   return {
+    exists: true,
     entries,
     diagnostics: [],
     latestFor: (key) => [...entries].reverse().find((e) => keyOf(e) === keyOf(key)),
