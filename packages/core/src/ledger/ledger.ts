@@ -76,11 +76,7 @@ export async function readLedger(repoRoot: string): Promise<LedgerView> {
   return buildView(entries, diagnostics, true);
 }
 
-function buildView(
-  entries: GateEvent[],
-  diagnostics: Diagnostic[],
-  exists: boolean,
-): LedgerView {
+function buildView(entries: GateEvent[], diagnostics: Diagnostic[], exists: boolean): LedgerView {
   const byKey = new Map<string, GateEvent[]>();
   for (const entry of entries) {
     const key = keyOf(entry);

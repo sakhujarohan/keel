@@ -85,7 +85,7 @@ export async function diagnose(args: { repoRoot: string; anchor: GitAnchor }): P
     detail:
       ledger.entries.length === 0 && ledger.diagnostics.length === 0
         ? "no gates sealed yet"
-        : `${ledger.entries.length} entries, ${ledger.diagnostics.length} unusable line(s)`,
+        : `${ledger.entries.length} ${ledger.entries.length === 1 ? "entry" : "entries"}, ${ledger.diagnostics.length} unusable line(s)`,
     ...(ledger.diagnostics.length === 0
       ? {}
       : { fix: `Restore ${LEDGER_PATH} from git history rather than hand-editing it.` }),
