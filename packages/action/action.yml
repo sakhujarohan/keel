@@ -10,6 +10,14 @@ runs:
     # `check --ci` emits ::error file=…,line=… annotations on the offending artifact lines and
     # exits 1 on any block-severity finding, which fails this step. The action holds no logic of
     # its own — everything it could get wrong is tested in the CLI.
+    #
+    # The version is pinned deliberately: an unpinned `npx <pkg>` always fetches whatever is
+    # newest on npm, which means a compromised or typosquatted future release would run here with
+    # the runner's permissions on every PR, silently. Bump this by hand on every release — that's
+    # the point, not an oversight.
+    #
+    # Until @keel-dev/cli is actually published, this step has no effect either way (see the
+    # README's Status & roadmap).
     - name: keel check
       shell: bash
-      run: npx --yes @keel-dev/cli check --ci
+      run: npx --yes @keel-dev/cli@2.0.0-alpha check --ci

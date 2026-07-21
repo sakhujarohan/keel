@@ -1,6 +1,6 @@
 {
   "name": "@keel-dev/core",
-  "version": "0.0.0",
+  "version": "2.0.0-alpha",
   "private": true,
   "type": "module",
   "description": "Keel core — artifact schema, run model, gate ledger, and the check engine",
