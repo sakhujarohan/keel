@@ -19,7 +19,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run Keel Security Guard
-        uses: sakhujarohan/keel-sec-guard@main
+        uses: sakhujarohan/keel-sec-guard@3eefa3483df22204c3ef05be0c279430c6a5acfe # v1.0.0
         with:
           gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
           model: 'gemini-2.5-flash'
