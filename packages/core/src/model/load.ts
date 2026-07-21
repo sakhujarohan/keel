@@ -14,6 +14,7 @@ import { extractFeatureList, extractRequirements, extractTasks, splitStatus } fr
 import { parseFrontmatter } from "./frontmatter.js";
 import { isKebabName } from "./ids.js";
 import { DEFAULT_SPECS_DIR, MANIFEST_FILENAME, parseManifest } from "./manifest.js";
+import { assertSafeRepoPath } from "./paths.js";
 import { parseSections } from "./sections.js";
 import type {
   ArtifactDoc,
@@ -35,6 +36,10 @@ export async function loadRunModel(repoRoot: string, opts: LoadOptions = {}): Pr
   await assertDirectory(repoRoot);
 
   const diagnostics: Diagnostic[] = [];
+
+  if (opts.runFilter !== undefined) {
+    assertSafeRepoPath(repoRoot, join(DEFAULT_SPECS_DIR, opts.runFilter));
+  }
 
   const manifestRaw = await readMaybe(join(repoRoot, MANIFEST_FILENAME));
   const { manifest, diagnostics: manifestDiagnostics } = parseManifest(manifestRaw);
