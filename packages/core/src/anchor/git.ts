@@ -7,7 +7,7 @@
  * fixes that value.
  */
 
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -31,6 +31,12 @@ export interface GitAnchor {
   treeStatus(): Promise<TreeStatus>;
   /** Blob id per repo-relative path; null where the file does not exist. */
   hashObjects(paths: string[]): Promise<Map<string, string | null>>;
+  /**
+   * Blob id of in-memory content — the same value `hashObjects` would report if these exact
+   * bytes were on disk at that path. Needed because a seal hashes the artifact's *projected*
+   * content (post frontmatter-flip), which never touches disk before the seal is written.
+   */
+  hashContent(bytes: Buffer | string): Promise<string>;
   /** Recent commits with their parsed trailers — read only when a rule needs attribution. */
   recentCommits(limit: number): Promise<CommitRecord[]>;
 }
@@ -111,6 +117,13 @@ export function createGitAnchor(repoRoot: string): GitAnchor {
         result.set(path, await nativeBlobId(join(repoRoot, path)));
       }
       return result;
+    },
+
+    async hashContent(bytes) {
+      const format = await resolveObjectFormat();
+      const buffer = typeof bytes === "string" ? Buffer.from(bytes, "utf8") : bytes;
+      if (format === "sha256") return hashObjectStdin(repoRoot, buffer);
+      return blobId(buffer);
     },
 
     async recentCommits(limit) {
@@ -200,4 +213,49 @@ async function hashViaGit(
     result.set(path, ok && stdout.trim() ? stdout.trim() : null);
   }
   return result;
+}
+
+/**
+ * `git hash-object --stdin`, for content that has no file on disk yet (a seal's projected bytes).
+ * `execFile`'s promisified form has no way to write to the child's stdin, so this spawns directly.
+ */
+async function hashObjectStdin(repoRoot: string, bytes: Buffer): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const child = spawn("git", ["hash-object", "--stdin"], { cwd: repoRoot });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk;
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk;
+    });
+    child.on("error", (error) => {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        reject(
+          new KeelError({
+            code: "ENV_NO_GIT",
+            message: "git was not found on PATH.",
+            nextAction: "Install git, or run keel where git is available.",
+          }),
+        );
+        return;
+      }
+      reject(error);
+    });
+    child.on("close", (code) => {
+      if (code === 0 && stdout.trim()) {
+        resolve(stdout.trim());
+      } else {
+        reject(
+          new KeelError({
+            code: "ENV_UNREADABLE",
+            message: `git hash-object --stdin failed (${stderr.trim() || `exit ${code}`}).`,
+            nextAction: "Check that git is working in this repository, then re-run.",
+          }),
+        );
+      }
+    });
+    child.stdin.end(bytes);
+  });
 }

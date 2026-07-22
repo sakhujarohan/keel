@@ -8,7 +8,7 @@
 
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { blobId, type GitAnchor } from "../anchor/git.js";
+import type { GitAnchor } from "../anchor/git.js";
 import { type GateEvent, isKeelOwnedPath } from "../ledger/event.js";
 import { appendGateEvent, readLedger, type SealKey } from "../ledger/ledger.js";
 import { applyArtifactState } from "../model/frontmatter-state.js";
@@ -22,6 +22,14 @@ export interface PreparedSeal {
   /** Non-empty only when sealing over a dirty tree was explicitly allowed. */
   dirtyPaths: string[];
   priorEvent: GateEvent | undefined;
+  /**
+   * The `updated` date baked into the hash this entry seals (YYYY-MM-DD). A caller that also
+   * projects the artifact's frontmatter (`setArtifactState`) must reuse this exact value rather
+   * than reading the clock again — sealing can sit behind an interactive confirmation, and a
+   * second clock read that lands on the other side of midnight would write frontmatter the seal
+   * no longer matches.
+   */
+  updated: string;
 }
 
 interface GateArgs {
@@ -41,6 +49,10 @@ export async function prepareSeal(
 
   const safeArtifact = assertSafeRepoPath(repoRoot, artifact);
 
+  // Resolved once: `ts` and the `updated` baked into the hash must agree on the same instant,
+  // and a caller that projects frontmatter afterward must be able to reuse this exact date too.
+  const at = resolveNow(args.now);
+
   // Seal the artifact as it will be *once signed*: sealing flips its frontmatter to signed-off,
   // and if we hashed the pre-flip content the seal would break itself the instant the projection
   // is written. Hashing the post-flip content keeps the working tree matching the seal.
@@ -49,7 +61,7 @@ export async function prepareSeal(
     anchor,
     artifact: safeArtifact,
     sealAs: "signed-off",
-    now: args.now,
+    at,
   });
   const tree = await anchor.treeStatus();
 
@@ -90,11 +102,11 @@ export async function prepareSeal(
     artifact_hash: context.hash,
     actor: context.actor,
     commit: context.commit,
-    ts: timestamp(args.now),
+    ts: at.toISOString(),
     ...(clean ? {} : { dirty: true as const }),
   };
 
-  return { entry, dirtyPaths, priorEvent };
+  return { entry, dirtyPaths, priorEvent, updated: dateOf(at) };
 }
 
 export async function commitSeal(args: {
@@ -109,13 +121,14 @@ export async function commitSeal(args: {
 export async function reopenGate(args: GateArgs): Promise<GateEvent> {
   const { repoRoot, anchor, run, gate, artifact } = args;
   const safeArtifact = assertSafeRepoPath(repoRoot, artifact);
+  const at = resolveNow(args.now);
 
   const context = await gatherContext({
     repoRoot,
     anchor,
     artifact: safeArtifact,
     sealAs: "reopened",
-    now: args.now,
+    at,
   });
 
   const entry: GateEvent = {
@@ -126,7 +139,7 @@ export async function reopenGate(args: GateArgs): Promise<GateEvent> {
     artifact_hash: context.hash,
     actor: context.actor,
     commit: context.commit,
-    ts: timestamp(args.now),
+    ts: at.toISOString(),
   };
 
   await appendGateEvent(repoRoot, entry);
@@ -140,9 +153,10 @@ async function gatherContext(args: {
   artifact: string;
   /** The state the frontmatter will hold once this event is applied — what we hash. */
   sealAs: "signed-off" | "reopened";
-  now?: () => Date;
+  /** Resolved once by the caller, so `ts` and this hash's `updated` never read the clock apart. */
+  at: Date;
 }): Promise<{ hash: string; actor: string; commit: string }> {
-  const { repoRoot, anchor, artifact, sealAs } = args;
+  const { repoRoot, anchor, artifact, sealAs, at } = args;
 
   if (!(await anchor.isRepository())) {
     throw new GateRefusal({
@@ -187,16 +201,17 @@ async function gatherContext(args: {
   // Hash the artifact as it will read once its state frontmatter is set. Falls back to the raw
   // bytes when the file has no state frontmatter to project (which is fine — nothing will change
   // it either). This is what keeps a seal from breaking the moment its own projection is written.
-  const projected = applyArtifactState({ raw, status: sealAs, updated: dateOf(args.now) });
-  const hash = blobId(projected.ok ? projected.text : raw);
+  const projected = applyArtifactState({ raw, status: sealAs, updated: dateOf(at) });
+  const hash = await anchor.hashContent(projected.ok ? projected.text : raw);
 
   return { hash, actor, commit };
 }
 
-function timestamp(now: (() => Date) | undefined): string {
-  return (now?.() ?? new Date()).toISOString();
+/** Resolve the clock exactly once per operation — call sites must not read it again afterward. */
+function resolveNow(now: (() => Date) | undefined): Date {
+  return now?.() ?? new Date();
 }
 
-function dateOf(now: (() => Date) | undefined): string {
-  return (now?.() ?? new Date()).toISOString().slice(0, 10);
+function dateOf(at: Date): string {
+  return at.toISOString().slice(0, 10);
 }

@@ -1,4 +1,4 @@
-import { execFile } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -125,5 +125,53 @@ describe("GitAnchor", () => {
 
     expect(working).not.toBe(committed);
     expect(working).toBe(await git(["hash-object", "--", "a.txt"]));
+  });
+
+  /**
+   * A seal hashes the artifact's *projected* content, which has no file on disk yet. `hashContent`
+   * exists for exactly that case, and it must agree with `hashObjects` (and therefore with
+   * `git hash-object`) byte for byte — otherwise a freshly sealed gate reads as broken the moment
+   * it is checked, because the seal and the verification took different paths to the same content.
+   */
+  it("hashContent agrees with hashObjects for identical bytes", async () => {
+    await initRepo();
+
+    const cases: Record<string, string> = {
+      "plain.md": "# Requirements\n\nR1 — the system shall answer.\n",
+      "unicode.md": "— em dash, ✓ tick, 🚦 signal\n",
+      "empty.txt": "",
+    };
+
+    const anchor = createGitAnchor(root);
+    for (const [name, content] of Object.entries(cases)) {
+      await writeFile(join(root, name), content);
+      const onDisk = (await anchor.hashObjects([name])).get(name);
+      const inMemory = await anchor.hashContent(content);
+      expect(inMemory, `hashContent mismatch for ${name}`).toBe(onDisk);
+    }
+  });
+
+  it("hashContent matches `git hash-object` for a sha256 repository", async () => {
+    const sha256Root = join(root, "sha256-repo");
+    try {
+      execFileSync("git", ["init", "-q", "-b", "main", "--object-format=sha256", sha256Root]);
+    } catch {
+      return; // this git build cannot create sha256 repositories — nothing to verify here
+    }
+    execFileSync("git", ["config", "user.name", "Test Person"], { cwd: sha256Root });
+    execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: sha256Root });
+
+    const content = "# Requirements\n\nR1 — the system shall answer.\n";
+    const anchor = createGitAnchor(sha256Root);
+    const ours = await anchor.hashContent(content);
+
+    const theirs = execFileSync("git", ["hash-object", "--stdin"], {
+      cwd: sha256Root,
+      input: content,
+      encoding: "utf8",
+    }).trim();
+
+    expect(ours).toBe(theirs);
+    expect(ours).toMatch(/^[0-9a-f]{64}$/);
   });
 });

@@ -187,7 +187,13 @@ gate
       }
 
       await commitSeal({ repoRoot, prepared });
-      await project({ repoRoot, runName, artifact, status: "signed-off" });
+      await project({
+        repoRoot,
+        runName,
+        artifact,
+        status: "signed-off",
+        updated: prepared.updated,
+      });
       say(`\n${gateId} sealed ✓`);
       return EXIT_OK;
     }),
@@ -208,7 +214,7 @@ gate
       assertSafeRepoPath(repoRoot, runName);
       assertSafeRepoPath(repoRoot, artifact);
 
-      await reopenGate({
+      const reopened = await reopenGate({
         repoRoot,
         anchor: createGitAnchor(repoRoot),
         run: runName,
@@ -220,6 +226,7 @@ gate
         runName,
         artifact,
         status: "reopened",
+        updated: reopened.ts.slice(0, 10),
       });
       say(`${gateId} reopened — re-confirm it, then: keel gate pass ${gateId} --run ${runName}`);
       return EXIT_OK;
@@ -302,8 +309,14 @@ async function project(args: {
   runName: string;
   artifact: string;
   status: "signed-off" | "reopened";
+  /**
+   * The same date the gate/reopen operation hashed against — never a fresh `new Date()` here.
+   * Sealing waits on an interactive confirmation; if this read the clock again, a confirmation
+   * that straddles midnight would project frontmatter the seal no longer matches.
+   */
+  updated: string;
 }): Promise<void> {
-  const { repoRoot, runName, artifact, status } = args;
+  const { repoRoot, runName, artifact, status, updated } = args;
 
   assertSafeRepoPath(repoRoot, artifact);
 
@@ -311,7 +324,7 @@ async function project(args: {
     repoRoot,
     path: artifact,
     status,
-    updated: new Date().toISOString().slice(0, 10),
+    updated,
   });
 
   const model = await loadRunModel(repoRoot, { runFilter: runName });
