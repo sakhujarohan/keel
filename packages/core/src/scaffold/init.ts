@@ -265,10 +265,25 @@ exit 0
 `;
 }
 
+/**
+ * The version is pinned deliberately, for the same reason the GitHub Action pins
+ * @keel-dev/cli (packages/action/action.yml): an unpinned `npx <pkg>` always fetches whatever is
+ * newest on npm, which turns every push into an unreviewed supply-chain trust decision. Bump this
+ * by hand on every keel-sec-guard release.
+ */
+const SEC_GUARD_VERSION = "1.0.0";
+
 function secGuardHookScript(): string {
   return `#!/bin/sh
-# Installed by keel init. Runs local security audit before pushing code to origin.
-npx keel-sec-guard audit --branch main --fail-on HIGH
+# Installed by keel init. Runs a local security audit before pushing code to origin.
+
+# --branch names the base branch keel-sec-guard diffs against, not the branch being pushed.
+# Prefer the remote's actual default branch; fall back to keel-sec-guard's own default ("main")
+# when there is no origin yet (e.g. a brand-new local repo) rather than guessing a name.
+BASE_BRANCH="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's@^origin/@@')"
+BASE_BRANCH="\${BASE_BRANCH:-main}"
+
+npx --yes keel-sec-guard@${SEC_GUARD_VERSION} audit --branch "$BASE_BRANCH" --fail-on HIGH
 `;
 }
 
