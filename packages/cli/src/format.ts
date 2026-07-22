@@ -48,13 +48,14 @@ function renderAgent(report: CheckReport): string {
   return lines.join("\n");
 }
 
+/** GitHub's escaping rules for a workflow command's data (the part after the final `::`). */
+function escapeData(s: string): string {
+  return s.replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
+}
+
+/** GitHub's escaping rules for a workflow command's property values (`file=`, `title=`, …). */
 function escapeProperty(s: string): string {
-  return s
-    .replace(/%/g, "%25")
-    .replace(/\r/g, "%0D")
-    .replace(/\n/g, "%0A")
-    .replace(/:/g, "%3A")
-    .replace(/,/g, "%2C");
+  return escapeData(s).replace(/:/g, "%3A").replace(/,/g, "%2C");
 }
 
 function renderCi(report: CheckReport): string {
@@ -63,7 +64,9 @@ function renderCi(report: CheckReport): string {
     const position = finding.line !== undefined ? `,line=${finding.line}` : "";
     const file = escapeProperty(finding.path);
     const title = escapeProperty(finding.rule);
-    const msg = finding.message.replace(/\r?\n/g, " ");
+    // Flattened to one line for readability; escapeData then covers what survives that —
+    // a lone \r (no matching \n) and any literal % — so the annotation body is never malformed.
+    const msg = escapeData(finding.message.replace(/\r?\n/g, " "));
     return `::${level} file=${file}${position},title=${title}::${msg}`;
   });
 

@@ -35,6 +35,18 @@ describe("renderReport", () => {
     expect(annotation).toContain("first line second line");
   });
 
+  it("escapes a lone carriage return and a literal percent in the message body", () => {
+    // \r?\n only collapses a full CRLF/LF pair to a space; a bare \r (no matching \n) survives
+    // that step and must still be escaped, or it can smuggle a carriage return into the
+    // annotation body. A literal % must also be escaped first so it can't be misread as the
+    // start of an escape sequence.
+    const finding = { ...blockFinding, message: "100% done\ranyway" };
+    const out = renderReport(report({ findings: [finding], blocking: 1, exitCode: 1 }), "ci");
+    const annotation = out.split("\n").find((l) => l.startsWith("::error"));
+    expect(annotation).toContain("100%25 done%0Danyway");
+    expect(annotation).not.toContain("\r");
+  });
+
   it("gives an agent one next action", () => {
     const out = renderReport(
       report({ findings: [blockFinding], blocking: 1, exitCode: 1 }),
