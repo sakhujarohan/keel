@@ -61,4 +61,22 @@ telemetry: on
 `);
     expect(manifest).toBeNull();
   });
+
+  it("rejects a specs_dir that escapes the repository root", () => {
+    const { manifest, diagnostics } = parseManifest(`schema: 2
+templates_version: 2.0.0
+specs_dir: ../../etc
+`);
+    expect(manifest).toBeNull();
+    expect(diagnostics.map((d) => d.code)).toEqual(["manifest-invalid"]);
+    expect(diagnostics[0]?.message).toContain("specs_dir");
+  });
+
+  it("rejects an absolute specs_dir", () => {
+    const { manifest } = parseManifest(`schema: 2
+templates_version: 2.0.0
+specs_dir: /etc
+`);
+    expect(manifest).toBeNull();
+  });
 });

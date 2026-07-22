@@ -9,6 +9,7 @@
 
 import YAML from "yaml";
 import { z } from "zod";
+import { assertSafeRepoPath } from "./paths.js";
 import type { Diagnostic, Manifest } from "./types.js";
 
 /** Strict: an unknown key is a mistake to report, not something to tolerate silently. */
@@ -49,16 +50,38 @@ export function parseManifest(raw: string | null): ManifestResult {
     return { manifest: null, diagnostics: [invalid(detail)] };
   }
 
+  const specsDir = result.data.specs_dir ?? DEFAULT_SPECS_DIR;
+
+  // specs_dir drives every read path the loader and the checker walk (model/load.ts,
+  // check/context.ts) — an absolute path or a `..` segment would send them outside the repo.
+  // assertSafeRepoPath is purely path arithmetic (no filesystem access), so any absolute
+  // placeholder works as the reference frame; only whether specs_dir escapes it matters.
+  try {
+    assertSafeRepoPath(PLACEHOLDER_ROOT, specsDir);
+  } catch {
+    return {
+      manifest: null,
+      diagnostics: [
+        invalid(
+          'field `specs_dir`: must stay inside the repository root (no absolute paths or ".." segments)',
+        ),
+      ],
+    };
+  }
+
   return {
     manifest: {
       schema: 2,
       templatesVersion: result.data.templates_version,
-      specsDir: result.data.specs_dir ?? DEFAULT_SPECS_DIR,
+      specsDir,
       telemetry: "off",
     },
     diagnostics: [],
   };
 }
+
+/** Any absolute path works — assertSafeRepoPath only checks that specsDir stays under it. */
+const PLACEHOLDER_ROOT = process.platform === "win32" ? "C:\\keel-repo-root" : "/keel-repo-root";
 
 function invalid(detail: string): Diagnostic {
   return {
