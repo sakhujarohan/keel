@@ -47,10 +47,16 @@ program
 
 program
   .command("init")
-  .description("scaffold keel.yaml, templates and adapter hooks (never overwrites)")
+  .description(
+    "scaffold keel.yaml, templates, adapter hooks, and the agent operating context (never overwrites)",
+  )
+  .option(
+    "--no-agent-context",
+    "skip AGENTS.md, workflow, principles, profiles, tools, skills, and .claude commands/agents",
+  )
   .action(
-    run(async () => {
-      const result = await init({ repoRoot: process.cwd() });
+    run(async (opts: { agentContext: boolean }) => {
+      const result = await init({ repoRoot: process.cwd(), agentContext: opts.agentContext });
       say(renderScaffold(result));
       say("\nnext: keel run new <name>");
       return EXIT_OK;

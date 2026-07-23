@@ -5,13 +5,17 @@
  * enforcing. A hook that was never wired reports nothing, which looks exactly like a clean run.
  */
 
+import { execFile } from "node:child_process";
 import { readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
+import { promisify } from "node:util";
 import type { GitAnchor } from "../anchor/git.js";
 import { LEDGER_PATH } from "../ledger/event.js";
 import { readLedger } from "../ledger/ledger.js";
 import { MANIFEST_FILENAME, parseManifest } from "../model/manifest.js";
-import { PHASE_GATE_MATCHERS } from "./init.js";
+import { AGENT_CONTEXT_SAMPLE_FILES, PHASE_GATE_MATCHERS } from "./init.js";
+
+const exec = promisify(execFile);
 
 export interface Probe {
   name: string;
@@ -92,8 +96,62 @@ export async function diagnose(args: { repoRoot: string; anchor: GitAnchor }): P
   });
 
   probes.push(await probeHooks(repoRoot));
+  probes.push(await probeKeelOnPath());
+  probes.push(await probeAgentContext(repoRoot));
 
   return probes;
+}
+
+/**
+ * The exact failure that makes a gate hook fail silently and confusingly: `.claude/settings.json`
+ * runs a bare `keel check …` in a non-interactive subprocess, which never sees a shell alias or
+ * rc-file function — only a real `PATH` entry resolves there. Catching it here means it surfaces
+ * as a clear `keel doctor` finding instead of "command not found" the first time a phase skill runs.
+ */
+async function probeKeelOnPath(): Promise<Probe> {
+  const finder = process.platform === "win32" ? "where" : "which";
+  try {
+    const { stdout } = await exec(finder, ["keel"]);
+    const resolved = stdout
+      .split(/\r?\n/)
+      .find((line) => line.trim().length > 0)
+      ?.trim();
+    if (resolved) return { name: "keel on PATH", ok: true, detail: resolved };
+  } catch {
+    // fall through — not found, or `which`/`where` itself is unavailable
+  }
+  return {
+    name: "keel on PATH",
+    ok: false,
+    detail: "not resolvable as a bare `keel` command",
+    fix: "A hook runs `keel` in a non-interactive subprocess, so a shell alias won't reach it. Build and link it: npm run build && (cd packages/cli && npm link)",
+  };
+}
+
+/** Missing this is the difference between an agent that knows the lifecycle and one that doesn't. */
+async function probeAgentContext(repoRoot: string): Promise<Probe> {
+  const present = await Promise.all(
+    AGENT_CONTEXT_SAMPLE_FILES.map((path) => fileExists(join(repoRoot, path))),
+  );
+  const found = present.filter(Boolean).length;
+  const total = AGENT_CONTEXT_SAMPLE_FILES.length;
+
+  return {
+    name: "agent context",
+    ok: found === total,
+    detail:
+      found === 0
+        ? "absent — the agent has no lifecycle awareness (AGENTS.md, workflow/, .claude/commands)"
+        : `${found} of ${total} sampled files present`,
+    ...(found === total ? {} : { fix: "Run: keel init" }),
+  };
+}
+
+async function fileExists(absolute: string): Promise<boolean> {
+  return stat(absolute).then(
+    () => true,
+    () => false,
+  );
 }
 
 /** The probe that matters most: enforcement that is not wired is enforcement that is not happening. */

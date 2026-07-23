@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { lstat, mkdir, mkdtemp, readFile, rm, stat, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
@@ -94,6 +94,64 @@ describe("init", () => {
     expect(await readFile(join(root, ".claude/settings.json"), "utf8")).toBe("{ not json");
     expect(result.skipped.some((s) => s.includes("not valid JSON"))).toBe(true);
   });
+
+  it("scaffolds the agent operating context by default", async () => {
+    const result = await init({ repoRoot: root });
+
+    expect(result.written).toContain("AGENTS.md");
+    expect(result.written).toContain("CLAUDE.md");
+    expect(result.written).toContain("GEMINI.md");
+    expect(result.written).toContain("principles.md");
+    expect(result.written).toContain("workflow/lifecycle.md");
+    expect(result.written).toContain("profiles/README.md");
+    expect(result.written).toContain("tools/diagrams.md");
+    expect(result.written).toContain("skills/load-testing/SKILL.md");
+    expect(result.written).toContain(".claude/commands/kickoff.md");
+    expect(result.written).toContain(".claude/agents/reviewer.md");
+
+    expect(await exists("AGENTS.md")).toBe(true);
+    expect(await exists("workflow/fast-path.md")).toBe(true);
+  });
+
+  it("materialises CLAUDE.md and GEMINI.md as real symlinks to AGENTS.md", async () => {
+    await init({ repoRoot: root });
+
+    const claude = await lstat(join(root, "CLAUDE.md"));
+    const gemini = await lstat(join(root, "GEMINI.md"));
+    expect(claude.isSymbolicLink()).toBe(true);
+    expect(gemini.isSymbolicLink()).toBe(true);
+
+    // A symlink reads the same content as its target — proves it actually resolves.
+    const agents = await readFile(join(root, "AGENTS.md"), "utf8");
+    expect(await readFile(join(root, "CLAUDE.md"), "utf8")).toBe(agents);
+    expect(await readFile(join(root, "GEMINI.md"), "utf8")).toBe(agents);
+  });
+
+  it("skips the agent operating context under --no-agent-context, without touching the rest", async () => {
+    const result = await init({ repoRoot: root, agentContext: false });
+
+    expect(await exists("AGENTS.md")).toBe(false);
+    expect(await exists("CLAUDE.md")).toBe(false);
+    expect(await exists("workflow")).toBe(false);
+    expect(await exists(".claude/commands")).toBe(false);
+
+    // Everything else keel init always writes is unaffected by the flag.
+    expect(await exists("keel.yaml")).toBe(true);
+    expect(await exists("templates/requirements.md")).toBe(true);
+    expect(await exists(".claude/settings.json")).toBe(true);
+    expect(result.written).toContain("keel.yaml");
+  });
+
+  it("never overwrites a hand-edited AGENTS.md on a second run", async () => {
+    await init({ repoRoot: root });
+    await writeFile(join(root, "AGENTS.md"), "# My own notes\n");
+
+    const second = await init({ repoRoot: root });
+
+    expect(second.written).not.toContain("AGENTS.md");
+    expect(second.skipped).toContain("AGENTS.md");
+    expect(await readFile(join(root, "AGENTS.md"), "utf8")).toBe("# My own notes\n");
+  });
 });
 
 describe("createRun", () => {
@@ -131,6 +189,7 @@ describe("doctor", () => {
     expect(probe(probes, "git repository")?.ok).toBe(false);
     expect(probe(probes, "manifest")?.ok).toBe(false);
     expect(probe(probes, "agent hooks")?.ok).toBe(false);
+    expect(probe(probes, "agent context")?.ok).toBe(false);
   });
 
   it("reports all clear for a fully set-up repo", async () => {
@@ -148,7 +207,25 @@ describe("doctor", () => {
     expect(probe(probes, "commits")?.ok).toBe(true);
     expect(probe(probes, "manifest")?.ok).toBe(true);
     expect(probe(probes, "agent hooks")?.ok).toBe(true);
-    expect(probes.every((p) => p.ok)).toBe(true);
+    expect(probe(probes, "agent context")?.ok).toBe(true);
+    // "keel on PATH" depends on this machine's actual PATH (e.g. whether `npm link` has run) —
+    // not on anything `init()` writes, so it's asserted for shape here, not a fixed verdict.
+    const onPath = probe(probes, "keel on PATH");
+    expect(onPath).toBeDefined();
+    expect(typeof onPath?.ok).toBe("boolean");
+    if (!onPath?.ok) expect(onPath?.fix).toContain("npm link");
+  });
+
+  it("reports agent context as partial when some, not all, sampled files are present", async () => {
+    await git(["init", "-q", "-b", "main"]);
+    await init({ repoRoot: root });
+    await unlink(join(root, ".claude/commands/kickoff.md"));
+
+    const probes = await diagnose({ repoRoot: root, anchor: createGitAnchor(root) });
+
+    const agentContext = probe(probes, "agent context");
+    expect(agentContext?.ok).toBe(false);
+    expect(agentContext?.detail).toMatch(/of \d+ sampled files present/);
   });
 
   it("flags a mangled ledger line", async () => {

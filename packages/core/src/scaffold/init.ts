@@ -6,7 +6,7 @@
  */
 
 import { existsSync } from "node:fs";
-import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
+import { lstat, mkdir, readdir, readFile, stat, symlink, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { KeelError } from "../model/errors.js";
@@ -20,20 +20,26 @@ export interface ScaffoldResult {
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
-function resolveAssetsDir(): string {
+/** Both shipped bundles (`templates`, `agent`) live at the same three candidate layouts. */
+function resolveAssetsDir(bundle: string): string {
   const candidates = [
-    join(HERE, "..", "..", "assets", "templates"),
-    join(HERE, "..", "..", "core", "assets", "templates"),
-    join(HERE, "..", "core", "assets", "templates"),
+    join(HERE, "..", "..", "assets", bundle),
+    join(HERE, "..", "..", "core", "assets", bundle),
+    join(HERE, "..", "core", "assets", bundle),
   ];
   for (const candidate of candidates) {
-    if (existsSync(join(candidate, "VERSION"))) return candidate;
+    if (existsSync(join(candidate, bundle === "templates" ? "VERSION" : "AGENTS.md"))) {
+      return candidate;
+    }
   }
   return candidates[0];
 }
 
 /** Templates ship with the package; resolved safely across source and bundle locations. */
-export const DEFAULT_ASSETS = resolveAssetsDir();
+export const DEFAULT_ASSETS = resolveAssetsDir("templates");
+
+/** The agent operating context (AGENTS.md, workflow/, principles.md, …) ships the same way. */
+export const DEFAULT_AGENT_ASSETS = resolveAssetsDir("agent");
 
 const CLAUDE_SETTINGS = ".claude/settings.json";
 const COMMIT_HOOK = ".git/hooks/prepare-commit-msg";
@@ -49,11 +55,45 @@ export const PHASE_GATE_MATCHERS: { skill: string; gate: string }[] = [
   { skill: "implement", gate: "G5" },
 ];
 
+/**
+ * The agent operating context, directory by directory. Source names avoid a leading dot (the
+ * shipped bundle is otherwise a plain, dot-free tree, same as `assets/templates`) — the two
+ * `.claude/*` subtrees are named plainly in the bundle and mapped to their dotted destination here.
+ */
+const AGENT_CONTEXT_DIRS: { src: string; dest: string }[] = [
+  { src: "workflow", dest: "workflow" },
+  { src: "profiles", dest: "profiles" },
+  { src: "tools", dest: "tools" },
+  { src: "skills", dest: "skills" },
+  { src: "claude-commands", dest: ".claude/commands" },
+  { src: "claude-agents", dest: ".claude/agents" },
+];
+
+/** One known file per agent-context directory — `keel doctor` samples these, not a full walk. */
+export const AGENT_CONTEXT_SAMPLE_FILES: string[] = [
+  "AGENTS.md",
+  "principles.md",
+  "workflow/lifecycle.md",
+  "profiles/README.md",
+  "tools/diagrams.md",
+  "skills/README.md",
+  ".claude/commands/kickoff.md",
+  ".claude/agents/reviewer.md",
+];
+
 export async function init(args: {
   repoRoot: string;
   assetsDir?: string;
+  agentAssetsDir?: string;
+  /** Scaffold the agent operating context (AGENTS.md, workflow/, …) — on by default (M1: agent-first). */
+  agentContext?: boolean;
 }): Promise<ScaffoldResult> {
-  const { repoRoot, assetsDir = DEFAULT_ASSETS } = args;
+  const {
+    repoRoot,
+    assetsDir = DEFAULT_ASSETS,
+    agentAssetsDir = DEFAULT_AGENT_ASSETS,
+    agentContext = true,
+  } = args;
   const result: ScaffoldResult = { written: [], skipped: [] };
 
   const templatesVersion = (await readAsset(assetsDir, "VERSION")).trim();
@@ -67,6 +107,22 @@ export async function init(args: {
   await writeClaudeSettings(repoRoot, result);
   await write(repoRoot, COMMIT_HOOK, commitHookScript(), result, 0o755);
   await write(repoRoot, SEC_GUARD_HOOK, secGuardHookScript(), result, 0o755);
+
+  if (agentContext) {
+    await write(repoRoot, "AGENTS.md", await readAsset(agentAssetsDir, "AGENTS.md"), result);
+    await writeSymlink(repoRoot, "CLAUDE.md", "AGENTS.md", result);
+    await writeSymlink(repoRoot, "GEMINI.md", "AGENTS.md", result);
+    await write(
+      repoRoot,
+      "principles.md",
+      await readAsset(agentAssetsDir, "principles.md"),
+      result,
+    );
+
+    for (const { src, dest } of AGENT_CONTEXT_DIRS) {
+      await copyTree(repoRoot, join(agentAssetsDir, src), dest, result);
+    }
+  }
 
   return result;
 }
@@ -133,13 +189,92 @@ async function exists(absolute: string): Promise<boolean> {
   );
 }
 
+/** `lstat`, not `stat` — a broken symlink must still count as "exists" so it is never overwritten. */
+async function existsAsLink(absolute: string): Promise<boolean> {
+  return lstat(absolute).then(
+    () => true,
+    () => false,
+  );
+}
+
+/**
+ * A relative symlink (`CLAUDE.md` → `AGENTS.md`), same as this repo's own root. `targetName` is
+ * resolved relative to `path`'s own directory, so both must live at the same directory level.
+ *
+ * Falls back to a plain copy of the target's content on any failure (e.g. Windows without
+ * dev-mode privilege — symlink creation there requires elevation, and this project doesn't
+ * otherwise support Windows yet) — CLAUDE.md/GEMINI.md must be readable either way.
+ */
+async function writeSymlink(
+  repoRoot: string,
+  path: string,
+  targetName: string,
+  result: ScaffoldResult,
+): Promise<void> {
+  const safePath = assertSafeRepoPath(repoRoot, path);
+  const absolute = join(repoRoot, safePath);
+
+  if (await existsAsLink(absolute)) {
+    result.skipped.push(safePath);
+    return;
+  }
+
+  await mkdir(dirname(absolute), { recursive: true });
+  try {
+    await symlink(targetName, absolute);
+  } catch {
+    const contents = await readFile(join(dirname(absolute), targetName), "utf8");
+    await writeFile(absolute, contents, "utf8");
+  }
+  result.written.push(safePath);
+}
+
+/**
+ * Recursively copies a shipped bundle subtree into the repo, file by file, through `write()`.
+ * Unlike a user's own repository tree (which legitimately may not have a given directory), this
+ * walks Keel's *own* shipped assets — a missing subtree here is a broken installation, not an
+ * absent optional thing, so it fails loudly the same way `readAsset` does for a missing file.
+ */
+async function copyTree(
+  repoRoot: string,
+  sourceDir: string,
+  destDir: string,
+  result: ScaffoldResult,
+): Promise<void> {
+  async function walk(dir: string, rel: string): Promise<void> {
+    let entries: import("node:fs").Dirent[];
+    try {
+      entries = await readdir(dir, { withFileTypes: true });
+    } catch {
+      throw new KeelError({
+        code: "ENV_UNREADABLE",
+        message: `Shipped asset directory ${dir} is missing from this installation.`,
+        nextAction: "Reinstall @keel-dev/cli.",
+        path: dir,
+      });
+    }
+    for (const entry of entries) {
+      const name = String(entry.name);
+      const childRel = rel ? `${rel}/${name}` : name;
+      if (entry.isDirectory()) {
+        await walk(join(dir, name), childRel);
+      } else {
+        const contents = await readFile(join(dir, name), "utf8");
+        await write(repoRoot, join(destDir, childRel), contents, result);
+      }
+    }
+  }
+
+  await walk(sourceDir, "");
+}
+
 async function readAsset(assetsDir: string, name: string): Promise<string> {
   try {
     return await readFile(join(assetsDir, name), "utf8");
   } catch {
     throw new KeelError({
       code: "ENV_UNREADABLE",
-      message: `Shipped template ${name} is missing from this installation.`,
+      message: `Shipped asset ${name} is missing from this installation.`,
       nextAction: "Reinstall @keel-dev/cli.",
       path: join(assetsDir, name),
     });
