@@ -15,29 +15,39 @@ git clone https://github.com/sakhujarohan/keel.git
 cd keel && npm install
 ```
 
-The CLI isn't published yet (see [Status](#status--roadmap)), so run it straight from the clone.
-This one-liner makes `keel` behave like an installed command for the rest of your shell session:
+The CLI isn't published yet (see [Status](#status--roadmap)), so build it and link it as a real
+`keel` command on your `PATH`:
 
 ```sh
-alias keel="npx tsx $(pwd)/packages/cli/src/main.ts"
+npm run build
+(cd packages/cli && npm link)
 ```
+
+Do this rather than a shell alias: `keel init` wires a Claude Code hook (`.claude/settings.json`)
+that runs `keel check --require <gate>` in a non-interactive subprocess — one that never sources
+your shell's rc file, so an alias is invisible to it. `npm link` puts a real `PATH` entry in place,
+which every subprocess sees, including that one. (`keel doctor` has a "keel on PATH" probe that
+catches this if you skip it — see below.)
 
 Point it at any git repo — this one or a project of your own:
 
 ```sh
 cd ~/some-project        # or stay right here to try it on this repo
-keel init                 # scaffold keel.yaml, templates, hooks — never overwrites
+keel init                 # scaffold keel.yaml, templates, hooks, and the agent operating
+                           # context (AGENTS.md, workflow/, principles.md, …) — never overwrites
 keel run new checkout     # start a run under specs/checkout/
 # … write specs/checkout/requirements.md, commit it …
 keel gate pass G1 --run checkout --artifact specs/checkout/requirements.md
 keel check                # verify the whole repo against the rule catalog
 ```
 
-**Using an agent instead of the raw CLI?** Open this repo in Claude Code and run `/kickoff` — the
-slash commands drive the same lifecycle, and `keel init` has already wired a hook that blocks a
-phase skill from running ahead of its gate. Any other agent (Codex, Cursor, Aider, Gemini): open
-[`AGENTS.md`](AGENTS.md) and follow [`workflow/lifecycle.md`](workflow/lifecycle.md) — it has no
-Claude-specific logic.
+**Keel is agent-first: `keel init` scaffolds everything an agent needs by default.** Open the repo
+you just `keel init`'d in Claude Code and run `/kickoff` — the slash commands, `AGENTS.md`,
+`workflow/lifecycle.md`, `principles.md`, and the rest all arrived with `init`, so this works in
+*any* project, not just this one. Any other agent (Codex, Cursor, Aider, Gemini): open the
+project's `AGENTS.md` and follow `workflow/lifecycle.md` — it has no Claude-specific logic. Don't
+want the agent bundle (a CI-only or CLI-only install)? `keel init --no-agent-context` skips it and
+writes only `keel.yaml`, `templates/`, and the hooks.
 
 ## Seeing it work
 
@@ -49,6 +59,11 @@ $ keel init
   ✓ templates/…            (12 files)
   ✓ .claude/settings.json
   ✓ .git/hooks/prepare-commit-msg
+  ✓ .git/hooks/pre-push
+  ✓ AGENTS.md, CLAUDE.md, GEMINI.md, principles.md
+  ✓ workflow/…             (2 files)   profiles/…   (4 files)   tools/…   (2 files)
+  ✓ skills/…               (2 files)
+  ✓ .claude/commands/…     (12 files)  .claude/agents/reviewer.md
 
 next: keel run new <name>
 
@@ -157,13 +172,22 @@ It borrows proven ideas — versioned markdown specs, EARS-style acceptance crit
 
 | Path | What it is |
 |------|------------|
+| `templates/` | A fill-in skeleton for every artifact. Always scaffolded by `keel init`. |
+
+The rest, through `.claude/agents/` below, is the **agent operating context** — also scaffolded by
+`keel init` into any target repo by default (`--no-agent-context` to skip just this part):
+
+| Path | What it is |
+|------|------------|
 | `AGENTS.md` | The operating context for any agent. Read first. (`CLAUDE.md`, `GEMINI.md` symlink to it.) |
 | `principles.md` | The constitution — always-on principles and named anti-patterns. |
 | `workflow/lifecycle.md` | The full 8-phase gated playbook. |
 | `workflow/fast-path.md` | Compressed overlay for time-boxed / rapid work. |
 | `profiles/` | Rigor profiles and the concern-by-concern axes. |
-| `templates/` | A fill-in skeleton for every artifact. |
+| `tools/` | Optional toolchain setup — diagrams via the Kroki MCP. |
+| `skills/` | Optional reusable capability modules (the `SKILL.md` pattern). |
 | `.claude/commands/` | Claude Code slash commands for each phase. |
+| `.claude/agents/` | Claude Code subagents (e.g. `reviewer` for Phase 8). |
 | `packages/core` | The v2 engine: run model, gate ledger, 13-rule check engine, state projection, scaffold, migrator. |
 | `packages/cli` | The `keel` binary — commander wiring, output formats, the exit-code contract. |
 | `packages/action` | The GitHub Action (`check --ci`) for gating merges. |
@@ -173,11 +197,12 @@ It borrows proven ideas — versioned markdown specs, EARS-style acceptance crit
 
 ## Status & roadmap
 
-**v2.0.0-alpha**, `packages/cli` not yet published — clone and run via `npx tsx`, as above.
-225 tests pass; Keel enforces its own run at 0 blocking findings.
+**v2.0.0-alpha**, `packages/cli` not yet published — clone, `npm run build`, and `npm link`, as above.
+235 tests pass; Keel enforces its own run at 0 blocking findings.
 
-- **Next (v2.0.0):** wire `tsup` for `packages/cli`, claim the `@keel-dev` npm scope, publish — so
-  `npx @keel-dev/cli init` works without a clone.
+- **Next (v2.0.0):** claim the `@keel-dev` npm scope and publish — so `npx @keel-dev/cli init`
+  works without a clone or `npm link` (the esbuild bundling `packages/cli` needs for that is
+  already wired).
 - **v2.0.x:** a ten-item patch list of documented, deliberate deferrals — see
   [`review-checklist.md`](specs/keel-v2/review-checklist.md#known-limitations--v20x-candidates).
 - **v2.1:** telemetry and a brownfield `keel survey` for gating changes to existing codebases.
