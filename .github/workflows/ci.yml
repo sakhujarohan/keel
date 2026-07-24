@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-test-check:
+    name: Build, lint, typecheck, test — then dogfood keel on itself
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          # Full history: the dogfooding `keel check` step below scans recent commits (KC-13) —
+          # a shallow clone would make that check see almost nothing to evaluate.
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build packages/cli
+        run: npm run build
+
+      - name: Lint, typecheck, test
+        run: npm run check
+
+      - name: keel check (dogfooding — this repo must pass its own gates)
+        run: node packages/cli/dist/main.js check
