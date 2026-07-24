@@ -137,6 +137,12 @@ this repo's own CI](https://github.com/sakhujarohan/keel/actions/workflows/ci.ym
 <summary>Diagram source (D2)</summary>
 
 ```d2
+vars: {
+  d2-config: {
+    theme-id: 8
+  }
+}
+
 direction: right
 
 agent: "Agent\nClaude Code · Cursor · Codex" { shape: person }
@@ -175,6 +181,12 @@ matching what shipped:
 <summary>Diagram source (D2)</summary>
 
 ```d2
+vars: {
+  d2-config: {
+    theme-id: 8
+  }
+}
+
 direction: right
 
 model: "model/" {

@@ -92,6 +92,12 @@ keel.core -> repo.specs: "writes: ledger entries,\nstate frontmatter, STATUS Now
 <summary>Diagram source (D2)</summary>
 
 ```d2
+vars: {
+  d2-config: {
+    theme-id: 8
+  }
+}
+
 direction: right
 
 model: "model/" {
