@@ -2,9 +2,13 @@
 
 **A mechanically-gated workflow for building software with AI agents — from problem statement to shipped, reviewed code.**
 
-`status: v2.0.0-alpha` · `license: MIT` · not yet on npm — run from source (below)
+[![CI](https://github.com/sakhujarohan/keel/actions/workflows/ci.yml/badge.svg)](https://github.com/sakhujarohan/keel/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Node >=20](https://img.shields.io/badge/node-%3E%3D20-339933?logo=node.js&logoColor=white)
 
-Keel is a repeatable lifecycle — requirements → high-level design → stack selection → low-level design → task breakdown → build/test → review — with a human sign-off gate at every transition. **v1** is the methodology: prompts, templates, and slash commands any agent can follow. **v2** (this repo, `packages/`) makes the gates *mechanical*: a hash-anchored ledger records every sign-off, and `keel check` blocks a design that ran ahead of its gate or a seal that's been tampered with. v2 was built entirely under Keel's own process — [`specs/keel-v2/`](specs/keel-v2/) is the run, and Keel now passes its own check at zero blocking findings.
+`v2.0.0-alpha` · not yet on npm — run from source (below)
+
+Keel is a repeatable lifecycle — requirements → high-level design → stack selection → low-level design → task breakdown → build/test → review — with a human sign-off gate at every transition. **v1** is the methodology: prompts, templates, and slash commands any agent can follow. **v2** (this repo, `packages/`) makes the gates *mechanical*: a hash-anchored ledger records every sign-off, and `keel check` blocks a design that ran ahead of its gate or a seal that's been tampered with. v2 was built entirely under Keel's own process — [`specs/keel-v2/`](specs/keel-v2/) is the run, and CI runs `keel check` against this repository on every push: the "zero blocking findings" claim below is re-verified live, not just written down.
 
 ---
 
@@ -51,7 +55,8 @@ writes only `keel.yaml`, `templates/`, and the hooks.
 
 ## Seeing it work
 
-Real, unedited output from the sequence above, run against a fresh repo:
+Real, unedited output from the sequence above, run against a fresh repo — every command below is
+literally reproducible, not abridged into working:
 
 ```
 $ keel init
@@ -71,6 +76,9 @@ $ keel run new checkout
   ✓ specs/checkout/context.md
   ✓ specs/checkout/STATUS.md
 
+# … write specs/checkout/requirements.md …
+$ git add -A && git commit -m "draft checkout requirements"
+
 $ keel gate pass G1 --run checkout --artifact specs/checkout/requirements.md --yes
 sealing:
   run       checkout
@@ -81,6 +89,13 @@ sealing:
   commit    2278e02
 
 G1 sealed ✓
+```
+
+Sealing flips the artifact's frontmatter to `signed-off` and re-derives `STATUS.md` — that's a real
+write to the working tree, so it needs a commit of its own before the seal is "the record":
+
+```
+$ git add -A && git commit -m "seal G1"
 ```
 
 Now someone edits the sealed file without re-confirming it:
@@ -110,7 +125,9 @@ $ echo $?
 
 *(The 2 warnings are `KC-13` — the two commits above carry no `Agent-*` attribution trailer,
 because they were made by a human typing `git commit` directly rather than through an agent with
-the hook's environment set. That's exactly what the rule is supposed to catch.)*
+the hook's environment set. That's exactly what the rule is supposed to catch — [see it live in
+this repo's own CI](https://github.com/sakhujarohan/keel/actions/workflows/ci.yml), which runs
+`keel check` against itself on every push.)*
 
 ## How it works
 
@@ -149,6 +166,60 @@ A gate isn't "sealed" because a file says `status: signed-off` — it's sealed b
 Edit the file after signing it, and the seal breaks the instant `keel check` runs — not at the next
 review, not when someone happens to notice.
 
+That diagram is behavior; this one is structure — `packages/core`'s actual module boundaries,
+matching what shipped:
+
+![packages/core module dependency graph: gate, check, project and migrate each depend on ledger and/or model and/or anchor, with model as the only reader of artifacts and anchor as the only door to git](specs/keel-v2/diagrams/shipped-core-modules.png)
+
+<details>
+<summary>Diagram source (D2)</summary>
+
+```d2
+direction: right
+
+model: "model/" {
+  loader: "RunModel loader\nthe only reader of artifacts"
+}
+anchor: "anchor/" {
+  git: "GitAnchor\nthe only door to git"
+}
+ledgerdir: "ledger/" {
+  led: "ledger + event + seal"
+}
+gatedir: "gate/" {
+  ops: "operations\nprepareSeal · commitSeal · reopenGate"
+}
+checkdir: "check/" {
+  rules: "13 rules · engine · report"
+}
+projectdir: "project/" {
+  proj: "state · render · write\nthe only writer into artifacts"
+}
+scaffolddir: "scaffold/" {
+  scaf: "init · doctor"
+}
+migratedir: "migrate/" {
+  mig: "upgrade"
+}
+
+gatedir -> ledgerdir
+gatedir -> anchor
+checkdir -> model
+checkdir -> ledgerdir
+projectdir -> ledgerdir
+projectdir -> model
+migratedir -> ledgerdir
+migratedir -> anchor
+scaffolddir -> model
+```
+
+</details>
+
+Each directory has exactly one job and one direction of dependency: `model/` is the only reader of
+artifacts, `project/` the only writer, `anchor/` the only thing that ever shells out to git. That's
+not incidental — it's what makes the rules in `check/` pure functions over a frozen snapshot,
+testable without touching a filesystem.
+
 ## Why it's built this way
 
 The expensive failure in AI-assisted development is the agent that designs or codes before the
@@ -167,6 +238,38 @@ It borrows proven ideas — versioned markdown specs, EARS-style acceptance crit
 | Rigor | All-or-nothing | **Modular profiles** — toggle observability, security depth, etc. per concern |
 | Sign-off | A chat message | A **hash-anchored ledger entry** that outlives the session |
 | Spec fidelity | Trusted to the model | **Literal Mandates** checked against the design before code is written |
+
+The interesting engineering problem underneath all of this is enforcement with no server: git *is*
+the database, and every guarantee has to hold under a filesystem's actual failure modes, not an
+idealized one. A few of the edge cases that had to be handled correctly, not just happily:
+
+- **Two git object formats, one hash.** A seal's hash must equal what `git hash-object` would print
+  for those exact bytes — computed natively (`sha1("blob " + len + "\0" + bytes)`) to keep a
+  subprocess off the hook's hot path, *and* falling back to a real `git hash-object` shell-out for
+  `sha256` repositories, with the object format detected once and cached. (`anchor/git.ts`)
+- **A write that can't half-happen.** The gate ledger is append-only; a single write to a file
+  opened `O_APPEND` is atomic on POSIX below `PIPE_BUF` (4 KiB), so two seals racing each other
+  interleave whole lines, never fragments — and the write is `fsync`'d before success is reported,
+  because a sign-off has to survive a crash. (`ledger/ledger.ts`)
+- **A symlink that might not be one.** Scaffolding `CLAUDE.md`/`GEMINI.md` as real symlinks to
+  `AGENTS.md` uses `lstat`, not `stat`, so a *broken* symlink still correctly reads as "exists" and
+  is never clobbered — and falls back to a plain file copy on platforms that refuse symlink creation
+  outright. (`scaffold/init.ts`)
+- **Every path, checked before it's trusted.** `--run`, `--artifact`, a run name, a `specs_dir` read
+  from `keel.yaml` — each is resolved and verified to stay inside the repository root before any
+  read, hash, or write; a traversal attempt throws immediately instead of touching the filesystem.
+  (`model/paths.ts`)
+- **Schemas that reject what they don't recognize.** The ledger's on-disk format and `keel.yaml`
+  both parse through `zod` in strict mode — an unknown key is a bug to surface, never data to
+  silently drop. (`ledger/event.ts`, `model/manifest.ts`)
+
+The deepest bug of the build was found the same way most of the above were hardened: by actually
+running the thing end-to-end, not trusting a unit test in isolation. Sealing hashed a gate's artifact
+*before* writing its `signed-off` frontmatter — which changed the very file the seal was supposed to
+protect. **Every gate sealed itself broken**, and no test caught it, because none of them ran both
+operations in the same sequence against a real file. The fix, and two more bugs found the same
+way — including one caught only by verifying this README's own quick start actually runs — are
+recorded in full in [`plan-of-record.md`](specs/keel-v2/plan-of-record.md#the-load-bearing-bug-a-seal-that-broke-itself).
 
 ## What's in here
 
