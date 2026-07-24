@@ -22,17 +22,20 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 
 /** Both shipped bundles (`templates`, `agent`) live at the same three candidate layouts. */
 function resolveAssetsDir(bundle: string): string {
+  // dev-from-source: core/src/scaffold/ -> core/assets/<bundle>. Named rather than indexed so the
+  // fallback below never types as possibly-undefined (noUncheckedIndexedAccess).
+  const devFromSource = join(HERE, "..", "..", "assets", bundle);
   const candidates = [
-    join(HERE, "..", "..", "assets", bundle),
-    join(HERE, "..", "..", "core", "assets", bundle),
-    join(HERE, "..", "core", "assets", bundle),
+    devFromSource,
+    join(HERE, "..", "..", "core", "assets", bundle), // bundled binary: cli/dist/ -> core/assets
+    join(HERE, "..", "core", "assets", bundle), // sibling layout: cli/ next to core/
   ];
   for (const candidate of candidates) {
     if (existsSync(join(candidate, bundle === "templates" ? "VERSION" : "AGENTS.md"))) {
       return candidate;
     }
   }
-  return candidates[0];
+  return devFromSource;
 }
 
 /** Templates ship with the package; resolved safely across source and bundle locations. */
