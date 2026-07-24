@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "kroki": {
+      "command": "kroki-mcp",
+      "env": {
+        "KROKI_ENDPOINT": "https://kroki.io",
+        "KROKI_TIMEOUT": "30",
+        "KROKI_OUTPUT_DIR": "./diagrams"
+      }
+    }
+  }
+}

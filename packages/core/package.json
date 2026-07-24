@@ -1,0 +1,23 @@
+{
+  "name": "@keel-dev/core",
+  "version": "2.0.0-alpha",
+  "private": true,
+  "type": "module",
+  "description": "Keel core — artifact schema, run model, gate ledger, and the check engine",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@types/mdast": "^4.0.4",
+    "gray-matter": "^4.0.3",
+    "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
+    "unified": "^11.0.5",
+    "yaml": "^2.9.0",
+    "zod": "^4.4.3"
+  }
+}

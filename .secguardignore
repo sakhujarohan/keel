@@ -1,5 +1,13 @@
-# Mute intentional permissions findings for GitHub Actions
+# Mute expected design trade-offs or non-vulnerabilities
 Elevated Permissions
 Over-privileged
 write permission
-UNAUTHENTICATED_ACTOR
+Unauthenticated Actor
+Asserted Identity
+actor identity
+Unpublished NPM Package
+Unclaimed NPM Scope
+Unregistered package
+Supply Chain
+SHA-1
+Hashing Algorithm

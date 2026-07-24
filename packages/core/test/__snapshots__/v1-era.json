@@ -1,0 +1,49 @@
+{
+  "diagnostics": [],
+  "manifest": null,
+  "runs": [
+    {
+      "artifacts": {
+        "context": {
+          "artifact": "context",
+          "gate": "—",
+          "phase": 0,
+          "schemaVersion": 1,
+          "status": "set",
+          "updated": "2026-07-20",
+        },
+        "conventions": undefined,
+        "hld": undefined,
+        "requirements": {
+          "artifact": "requirements",
+          "gate": "G1",
+          "phase": 1,
+          "schemaVersion": 1,
+          "status": "signed-off",
+          "updated": "2026-07-20",
+        },
+        "review": undefined,
+        "stack": undefined,
+      },
+      "assumptions": [
+        "A1: confirmed",
+      ],
+      "dir": "specs/legacy",
+      "featureList": [],
+      "features": [],
+      "hasStatusSplit": false,
+      "mandates": [
+        "M1: Responses MUST use HTTP 201 on create",
+      ],
+      "mandatesExplicitNone": false,
+      "name": "legacy",
+      "nfrs": [
+        "N1: Determinism — same input yields same output",
+      ],
+      "requirements": [
+        "R1: When asked, the system shall answer.",
+        "R2: The system shall persist answers.",
+      ],
+    },
+  ],
+}

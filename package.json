@@ -1,0 +1,27 @@
+{
+  "name": "keel-workspace",
+  "version": "2.0.0-alpha",
+  "private": true,
+  "type": "module",
+  "description": "Keel v2 — enforcement layer for the Keel agentic SDLC",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "check": "biome check . && npm run typecheck --workspaces && vitest run",
+    "typecheck": "npm run typecheck --workspaces",
+    "test": "vitest run",
+    "format": "biome check --write ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.4",
+    "@types/node": "^26.1.1",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}

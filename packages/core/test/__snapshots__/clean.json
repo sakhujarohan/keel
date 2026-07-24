@@ -1,0 +1,98 @@
+{
+  "diagnostics": [],
+  "manifest": {
+    "schema": 2,
+    "specsDir": "specs",
+    "telemetry": "off",
+    "templatesVersion": "2.0.0",
+  },
+  "runs": [
+    {
+      "artifacts": {
+        "context": {
+          "artifact": "context",
+          "gate": "—",
+          "phase": 0,
+          "schemaVersion": 2,
+          "status": "set",
+          "updated": "2026-07-20",
+        },
+        "conventions": {
+          "artifact": "conventions",
+          "gate": "—",
+          "phase": 3,
+          "schemaVersion": 2,
+          "status": "draft",
+          "updated": "2026-07-20",
+        },
+        "hld": {
+          "artifact": "hld",
+          "gate": "G2",
+          "phase": 2,
+          "schemaVersion": 2,
+          "status": "signed-off",
+          "updated": "2026-07-20",
+        },
+        "requirements": {
+          "artifact": "requirements",
+          "gate": "G1",
+          "phase": 1,
+          "schemaVersion": 2,
+          "status": "signed-off",
+          "updated": "2026-07-20",
+        },
+        "review": {
+          "artifact": "review",
+          "gate": "G6",
+          "phase": 8,
+          "schemaVersion": 2,
+          "status": "draft",
+          "updated": "2026-07-20",
+        },
+        "stack": {
+          "artifact": "stack",
+          "gate": "G3",
+          "phase": 3,
+          "schemaVersion": 2,
+          "status": "signed-off",
+          "updated": "2026-07-20",
+        },
+      },
+      "assumptions": [
+        "A1: confirmed",
+      ],
+      "dir": "specs/demo",
+      "featureList": [
+        "widget → R1, R2",
+      ],
+      "features": [
+        {
+          "declaredInHld": true,
+          "has": {
+            "lld": true,
+            "specCheck": true,
+            "tasks": true,
+          },
+          "name": "widget",
+          "tasks": [
+            "T1 w1 done deps=[] files=[src/widget.ts] serves=[R1]",
+            "T2 w2 todo deps=[T1] files=[src/store.ts] serves=[R2]",
+          ],
+        },
+      ],
+      "hasStatusSplit": true,
+      "mandates": [
+        "M1: Responses MUST use HTTP 201 on create",
+      ],
+      "mandatesExplicitNone": false,
+      "name": "demo",
+      "nfrs": [
+        "N1: Determinism — same input yields same output",
+      ],
+      "requirements": [
+        "R1: When asked, the system shall answer.",
+        "R2: The system shall persist answers.",
+      ],
+    },
+  ],
+}
