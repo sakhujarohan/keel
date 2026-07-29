@@ -273,6 +273,9 @@ All resolved; none remain open.
 
 ## §9 — Roadmap
 
+> **Superseded.** The live roadmap now lives at [`/ROADMAP.md`](../../ROADMAP.md). What follows is
+> this run's own planning record as of G6, kept for history — it is not maintained further.
+
 1. **v2.0.0 (non-alpha):** wire `tsup` for `packages/cli`, claim the `@keel-dev` npm scope, publish.
    Neither is done yet — today the CLI runs from a clone via `npx tsx packages/cli/src/main.ts`, not
    a published `npx @keel-dev/cli`.

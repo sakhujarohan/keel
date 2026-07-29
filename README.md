@@ -315,12 +315,8 @@ The rest, through `.claude/agents/` below, is the **agent operating context** �
 **v2.0.0-alpha**, `packages/cli` not yet published — clone, `npm run build`, and `npm link`, as above.
 235 tests pass; Keel enforces its own run at 0 blocking findings.
 
-- **Next (v2.0.0):** claim the `@keel-dev` npm scope and publish — so `npx @keel-dev/cli init`
-  works without a clone or `npm link` (the esbuild bundling `packages/cli` needs for that is
-  already wired).
-- **v2.0.x:** a ten-item patch list of documented, deliberate deferrals — see
-  [`review-checklist.md`](specs/keel-v2/review-checklist.md#known-limitations--v20x-candidates).
-- **v2.1:** telemetry and a brownfield `keel survey` for gating changes to existing codebases.
+See [`ROADMAP.md`](ROADMAP.md) for what's planned across v2.0.0 through v3, including the v2.0.x
+patch list of documented, deliberate deferrals.
 
 Issues and PRs welcome — this is a young project and still shaping its contribution process.
 
